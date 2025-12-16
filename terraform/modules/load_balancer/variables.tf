@@ -1,0 +1,44 @@
+# Load Balancer Module - Variables
+
+variable "gcp_project_id" {
+  description = "GCP Project ID"
+  type        = string
+}
+
+variable "project_prefix" {
+  description = "Project prefix for resource naming"
+  type        = string
+}
+
+variable "ssl_certificate" {
+  description = "SSL certificate content"
+  type        = string
+  sensitive   = true
+}
+
+variable "ssl_private_key" {
+  description = "SSL private key content"
+  type        = string
+  sensitive   = true
+}
+
+variable "storage_bucket_name" {
+  description = "Cloud Storage bucket name for CDN"
+  type        = string
+}
+
+variable "cloud_run_service_urls" {
+  description = "List of Cloud Run service URLs for backend"
+  type        = list(string)
+}
+
+variable "vpc_network_name" {
+  description = "VPC network name"
+  type        = string
+}
+
+variable "tags" {
+  description = "Tags to apply to resources"
+  type        = map(string)
+  default     = {}
+}
