@@ -188,7 +188,7 @@ module "iap" {
 
   gcp_project_id                           = var.gcp_project_id
   project_prefix                           = var.project_prefix
-  support_email                            = var.iap_support_email
+  #support_email                            = var.iap_support_email
   application_title                        = var.iap_application_title
   admin_backend_service_name               = var.iap_admin_backend_service
   user_management_backend_service_name     = var.iap_user_mgmt_backend_service
