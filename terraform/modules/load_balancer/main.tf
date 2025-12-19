@@ -11,33 +11,54 @@ resource "google_compute_global_address" "lb_ip" {
   labels = var.tags
 }
 
-# ============================================
-# Serverless NEG for Cloud Run - Primary Region
-# ============================================
-
-resource "google_compute_region_network_endpoint_group" "cloud_run_primary" {
-  name                  = "${var.project_prefix}-neg-primary"
+# Serverless NEG for Backend - Primary Region
+resource "google_compute_region_network_endpoint_group" "backend_primary" {
+  name                  = "${var.project_prefix}-neg-backend-primary"
   network_endpoint_type = "SERVERLESS"
   region                = "us-central1"
   project               = var.gcp_project_id
 
   cloud_run {
-    service = "looply-api"
+    service = "${var.project_prefix}-backend"
+  }
+}
+
+# Serverless NEG for Frontend - Primary Region
+resource "google_compute_region_network_endpoint_group" "frontend_primary" {
+  name                  = "${var.project_prefix}-neg-frontend-primary"
+  network_endpoint_type = "SERVERLESS"
+  region                = "us-central1"
+  project               = var.gcp_project_id
+
+  cloud_run {
+    service = "${var.project_prefix}-frontend"
   }
 }
 
 # ============================================
-# Serverless NEG for Cloud Run - Secondary Region
+# Serverless NEG for Backend - Secondary Region
 # ============================================
 
-resource "google_compute_region_network_endpoint_group" "cloud_run_secondary" {
-  name                  = "${var.project_prefix}-neg-secondary"
+resource "google_compute_region_network_endpoint_group" "backend_secondary" {
+  name                  = "${var.project_prefix}-neg-backend-secondary"
   network_endpoint_type = "SERVERLESS"
   region                = "europe-west1"
   project               = var.gcp_project_id
 
   cloud_run {
-    service = "looply-api-eu"
+    service = "${var.project_prefix}-backend-eu"
+  }
+}
+
+# Serverless NEG for Frontend - Secondary Region
+resource "google_compute_region_network_endpoint_group" "frontend_secondary" {
+  name                  = "${var.project_prefix}-neg-frontend-secondary"
+  network_endpoint_type = "SERVERLESS"
+  region                = "europe-west1"
+  project               = var.gcp_project_id
+
+  cloud_run {
+    service = "${var.project_prefix}-frontend-eu"
   }
 }
 
@@ -61,11 +82,11 @@ resource "google_compute_health_check" "default" {
 }
 
 # ============================================
-# Backend Service with CDN
+# Backend Service for API - with CDN
 # ============================================
 
-resource "google_compute_backend_service" "default" {
-  name            = "${var.project_prefix}-backend-service"
+resource "google_compute_backend_service" "backend_api" {
+  name            = "${var.project_prefix}-backend-api-service"
   project         = var.gcp_project_id
   protocol        = "HTTP"
   timeout_sec     = 30
@@ -74,13 +95,58 @@ resource "google_compute_backend_service" "default" {
   health_checks = [google_compute_health_check.default.id]
 
   backend {
-    group           = google_compute_region_network_endpoint_group.cloud_run_primary.id
+    group           = google_compute_region_network_endpoint_group.backend_primary.id
     balancing_mode  = "RATE"
     max_rate_per_endpoint = 100
   }
 
   backend {
-    group           = google_compute_region_network_endpoint_group.cloud_run_secondary.id
+    group           = google_compute_region_network_endpoint_group.backend_secondary.id
+    balancing_mode  = "RATE"
+    max_rate_per_endpoint = 100
+  }
+
+  cdn_policy {
+    cache_mode                = "CACHE_ALL_STATIC"
+    client_ttl                = 3600
+    default_ttl               = 3600
+    max_ttl                   = 86400
+    negative_caching          = true
+    serve_while_stale         = 86400
+    cache_key_policy {
+      include_host           = true
+      include_protocol       = true
+      include_query_string   = true
+    }
+  }
+
+  log_config {
+    enable      = true
+    sample_rate = 1.0
+  }
+}
+
+# ============================================
+# Backend Service for Frontend - with CDN
+# ============================================
+
+resource "google_compute_backend_service" "frontend_web" {
+  name            = "${var.project_prefix}-frontend-web-service"
+  project         = var.gcp_project_id
+  protocol        = "HTTP"
+  timeout_sec     = 30
+  load_balancing_scheme = "EXTERNAL"
+
+  health_checks = [google_compute_health_check.default.id]
+
+  backend {
+    group           = google_compute_region_network_endpoint_group.frontend_primary.id
+    balancing_mode  = "RATE"
+    max_rate_per_endpoint = 100
+  }
+
+  backend {
+    group           = google_compute_region_network_endpoint_group.frontend_secondary.id
     balancing_mode  = "RATE"
     max_rate_per_endpoint = 100
   }
@@ -107,23 +173,42 @@ resource "google_compute_backend_service" "default" {
 
 
 # ============================================
-# ============================================
-# URL Map
+# URL Map - Routes frontend and backend
 # ============================================
 
 resource "google_compute_url_map" "default" {
   name            = "${var.project_prefix}-url-map"
-  default_service = google_compute_backend_service.default.id
+  default_service = google_compute_backend_service.frontend_web.id
   project         = var.gcp_project_id
 
   path_matcher {
-    name            = "api-paths"
-    default_service = google_compute_backend_service.default.id
+    name            = "backend-api"
+    default_service = google_compute_backend_service.backend_api.id
 
     path_rule {
       paths   = ["/api/*", "/health"]
-      service = google_compute_backend_service.default.id
+      service = google_compute_backend_service.backend_api.id
     }
+  }
+
+  path_matcher {
+    name            = "frontend-web"
+    default_service = google_compute_backend_service.frontend_web.id
+
+    path_rule {
+      paths   = ["/*"]
+      service = google_compute_backend_service.frontend_web.id
+    }
+  }
+
+  host_rule {
+    hosts        = ["api.*", "backend.*"]
+    path_matcher = "backend-api"
+  }
+
+  host_rule {
+    hosts        = ["*"]
+    path_matcher = "frontend-web"
   }
 }
 

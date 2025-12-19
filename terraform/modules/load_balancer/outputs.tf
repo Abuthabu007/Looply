@@ -10,9 +10,14 @@ output "load_balancer_url" {
   description = "Load balancer HTTPS URL"
 }
 
-output "backend_service_id" {
-  value       = google_compute_backend_service.default.id
-  description = "Backend service ID"
+output "backend_api_service_id" {
+  value       = google_compute_backend_service.backend_api.id
+  description = "Backend API service ID"
+}
+
+output "frontend_web_service_id" {
+  value       = google_compute_backend_service.frontend_web.id
+  description = "Frontend web service ID"
 }
 
 output "url_map_id" {
@@ -30,12 +35,22 @@ output "ssl_certificate_id" {
   description = "SSL certificate ID"
 }
 
-output "primary_neg_id" {
-  value       = google_compute_region_network_endpoint_group.cloud_run_primary.id
-  description = "Primary region serverless NEG ID"
+output "backend_primary_neg_id" {
+  value       = google_compute_region_network_endpoint_group.backend_primary.id
+  description = "Primary region backend serverless NEG ID"
 }
 
-output "secondary_neg_id" {
-  value       = google_compute_region_network_endpoint_group.cloud_run_secondary.id
-  description = "Secondary region serverless NEG ID"
+output "backend_secondary_neg_id" {
+  value       = google_compute_region_network_endpoint_group.backend_secondary.id
+  description = "Secondary region backend serverless NEG ID"
+}
+
+output "frontend_primary_neg_id" {
+  value       = google_compute_region_network_endpoint_group.frontend_primary.id
+  description = "Primary region frontend serverless NEG ID"
+}
+
+output "frontend_secondary_neg_id" {
+  value       = google_compute_region_network_endpoint_group.frontend_secondary.id
+  description = "Secondary region frontend serverless NEG ID"
 }

@@ -27,11 +27,6 @@ variable "storage_bucket_name" {
   type        = string
 }
 
-variable "cloud_run_service_urls" {
-  description = "List of Cloud Run service URLs for backend"
-  type        = list(string)
-}
-
 variable "vpc_network_name" {
   description = "VPC network name"
   type        = string

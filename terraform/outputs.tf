@@ -27,10 +27,14 @@ output "networking" {
 
 output "compute" {
   value = {
-    cloud_run_primary_url   = module.compute.cloud_run_primary_service_url
-    cloud_run_secondary_url = module.compute.cloud_run_secondary_service_url
+    backend_primary_url   = module.compute.backend_primary_url
+    backend_secondary_url = module.compute.backend_secondary_url
+    frontend_primary_url  = module.compute.frontend_primary_url
+    frontend_secondary_url = module.compute.frontend_secondary_url
+    backend_api_endpoints = module.compute.backend_api_endpoints
+    frontend_endpoints    = module.compute.frontend_endpoints
   }
-  description = "Cloud Run service URLs"
+  description = "Cloud Run service URLs for backend and frontend"
 }
 
 output "pubsub" {

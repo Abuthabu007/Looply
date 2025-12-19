@@ -75,8 +75,8 @@ module "pubsub" {
   gcp_project_id                          = var.gcp_project_id
   project_prefix                          = var.project_prefix
   pubsub_message_retention_duration       = var.pubsub_message_retention_duration
-  cloud_run_primary_service_url           = module.compute.cloud_run_primary_service_url
-  cloud_run_secondary_service_url         = module.compute.cloud_run_secondary_service_url
+  cloud_run_primary_service_url           = module.compute.backend_primary_url
+  cloud_run_secondary_service_url         = module.compute.backend_secondary_url
   cloud_run_service_account_email         = module.service_accounts.cloud_run_service_account_email
   pubsub_service_account_email            = module.service_accounts.pubsub_service_account_email
 
@@ -128,10 +128,6 @@ module "load_balancer" {
   ssl_certificate           = var.ssl_certificate
   ssl_private_key           = var.ssl_private_key
   storage_bucket_name       = module.storage.videos_bucket_name
-  cloud_run_service_urls    = [
-    module.compute.cloud_run_primary_service_url,
-    module.compute.cloud_run_secondary_service_url
-  ]
   vpc_network_name          = module.networking.vpc_network_name
   
   tags = local.common_labels
@@ -250,7 +246,7 @@ resource "google_cloud_scheduler_job" "analytics_aggregation" {
 
   http_target {
     http_method = "POST"
-    uri         = module.compute.cloud_run_primary_service_url
+    uri         = module.compute.backend_primary_url
 
     headers = {
       "Content-Type" = "application/json"
@@ -262,7 +258,7 @@ resource "google_cloud_scheduler_job" "analytics_aggregation" {
 
     oidc_token {
       service_account_email = module.service_accounts.cloud_scheduler_service_account_email
-      audience              = module.compute.cloud_run_primary_service_url
+      audience              = module.compute.backend_primary_url
     }
   }
 
