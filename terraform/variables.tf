@@ -228,7 +228,7 @@ variable "log_filter" {
 variable "iap_support_email" {
   description = "Support email for IAP OAuth consent screen"
   type        = string
-  default     = ""
+  default     = "ahamedbeema1989@gmail.com"
 }
 
 variable "iap_application_title" {
