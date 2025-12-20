@@ -11,6 +11,7 @@ variable "project_prefix" {
 variable "support_email" {
   type        = string
   description = "Support email for OAuth consent screen"
+  default     = "admin@looply.co.in"
   validation {
     condition     = can(regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", var.support_email))
     error_message = "Must be a valid email address."

@@ -9,7 +9,7 @@ resource "google_iap_client" "project_client" {
 
 # IAP Brand (OAuth Consent Screen)
 resource "google_iap_brand" "project_brand" {
-  # support_email     = var.support_email
+  support_email     = var.support_email
   application_title = var.application_title
   project           = var.gcp_project_id
 }
