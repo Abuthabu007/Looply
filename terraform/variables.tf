@@ -296,3 +296,29 @@ variable "iap_failed_auth_threshold" {
   type        = number
   default     = 50
 }
+# ============================================================================
+# Identity Platform Variables
+# ============================================================================
+
+variable "google_oauth_client_id" {
+  description = "Google OAuth 2.0 Client ID for Identity Platform"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "google_oauth_client_secret" {
+  description = "Google OAuth 2.0 Client Secret for Identity Platform"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "allowed_redirect_uris" {
+  description = "List of allowed redirect URIs for OAuth configuration"
+  type        = list(string)
+  default = [
+    "http://localhost:3000",
+    "http://localhost:5000"
+  ]
+}

@@ -19,6 +19,20 @@ module "apis" {
   gcp_project_id = var.gcp_project_id
 }
 
+# ============================================
+# Identity Platform Module - Configure OAuth providers
+# ============================================
+module "identity_platform" {
+  source = "./modules/identity_platform"
+
+  gcp_project_id               = var.gcp_project_id
+  google_oauth_client_id       = var.google_oauth_client_id
+  google_oauth_client_secret   = var.google_oauth_client_secret
+  allowed_redirect_uris        = var.allowed_redirect_uris
+
+  depends_on = [module.apis]
+}
+
 # Service Accounts Module
 module "service_accounts" {
   source = "./modules/service_accounts"

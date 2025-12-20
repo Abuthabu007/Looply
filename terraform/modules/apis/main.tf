@@ -15,6 +15,7 @@ locals {
     "secretmanager.googleapis.com",         # Secret Manager (Secret storage)
     "cloudkms.googleapis.com",              # Cloud KMS (Key management)
     "iap.googleapis.com",                   # Identity-Aware Proxy (Authentication)
+    "identitytoolkit.googleapis.com",       # Identity Platform (OAuth providers, sign-in UI)
     "cloudscheduler.googleapis.com",        # Cloud Scheduler (Scheduled jobs)
     "iam.googleapis.com",                   # IAM (Identity and Access Management)
     "serviceusage.googleapis.com",          # Service Usage API (Enable/disable APIs)
