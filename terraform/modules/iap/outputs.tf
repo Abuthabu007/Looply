@@ -1,12 +1,12 @@
 output "iap_client_id" {
-  value       = google_iap_client.project_client.client_id
-  description = "The OAuth 2.0 client ID for IAP"
+  value       = "See GCP Console > APIs & Services > Credentials for your OAuth 2.0 Client ID"
+  description = "The OAuth 2.0 client ID for IAP (managed externally)"
   sensitive   = false
 }
 
 output "iap_brand_name" {
-  value       = google_iap_brand.project_brand.name
-  description = "The IAP brand name"
+  value       = "See GCP Console > Security > Identity-Aware Proxy for your IAP Brand"
+  description = "The IAP brand name (managed at organization level)"
 }
 
 output "admin_iap_binding_role" {
@@ -41,13 +41,14 @@ output "iap_monitoring_alert_policy_name" {
 
 output "iap_oauth_setup_info" {
   value = {
-    client_id           = google_iap_client.project_client.client_id
-    project_id          = var.gcp_project_id
-    scopes              = ["openid", "email", "profile"]
-    supported_grant_types = ["authorization_code"]
-    redirect_uris       = ["https://iap.googleapis.com/google_cloud_iap/web/oauth2/callback"]
+    oauth_client_id  = "Obtain from GCP Console > APIs & Services > Credentials"
+    oauth_brand      = "Managed at organization level in GCP Console"
+    project_id       = var.gcp_project_id
+    scopes           = ["openid", "email", "profile"]
+    redirect_uris    = ["https://iap.googleapis.com/google_cloud_iap/web/oauth2/callback"]
+    setup_location   = "GCP Console > Security > Identity-Aware Proxy"
   }
-  description = "OAuth 2.0 setup information for IAP"
+  description = "OAuth 2.0 setup information for IAP (managed externally)"
   sensitive   = false
 }
 

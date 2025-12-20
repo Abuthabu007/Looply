@@ -1,26 +1,19 @@
 # Identity-Aware Proxy (IAP) Module
 # Provides authentication and authorization at the load balancer level
 
-# OAuth 2.0 Client for IAP
-resource "google_iap_client" "project_client" {
-  display_name = "${var.project_prefix}-iap-client"
-  brand         = google_iap_brand.project_brand.name
-}
-
-# IAP Brand (OAuth Consent Screen)
-resource "google_iap_brand" "project_brand" {
-  support_email     = var.support_email
-  application_title = var.application_title
-  project           = var.gcp_project_id
-}
+# NOTE: IAP Brand and OAuth Client require an organization-level setup.
+# Since your project is organization-managed, these must be created through:
+# 1. GCP Console > Security > Identity-Aware Proxy > OAuth consent screen
+# 2. Google Cloud APIs & Services > Credentials > Create OAuth 2.0 Client
+#
+# This module manages the IAP resource bindings for your backend services.
+# The brand and client are managed externally and configured in your IAP settings.
 
 # IAP Settings for Backend Service (Admin Panel)
 resource "google_iap_web_backend_service_iam_binding" "admin_iap_binding" {
   web_backend_service = var.admin_backend_service_name
   role                = "roles/iap.httpsResourceAccessor"
   members             = var.admin_authorized_users
-
-  depends_on = [google_iap_client.project_client]
 }
 
 # IAP Settings for Backend Service (User Management API)
@@ -28,8 +21,6 @@ resource "google_iap_web_backend_service_iam_binding" "user_mgmt_iap_binding" {
   web_backend_service = var.user_management_backend_service_name
   role                = "roles/iap.httpsResourceAccessor"
   members             = var.user_management_authorized_users
-
-  depends_on = [google_iap_client.project_client]
 }
 
 # IAP Settings for Backend Service (Analytics Dashboard)
@@ -37,8 +28,6 @@ resource "google_iap_web_backend_service_iam_binding" "analytics_iap_binding" {
   web_backend_service = var.analytics_backend_service_name
   role                = "roles/iap.httpsResourceAccessor"
   members             = var.analytics_authorized_users
-
-  depends_on = [google_iap_client.project_client]
 }
 
 # Note: IAP is enabled at the load balancer backend service level
@@ -49,8 +38,6 @@ resource "google_iap_web_iam_binding" "public_access" {
   count   = var.enable_public_iap_access ? 1 : 0
   role    = "roles/iap.httpsResourceAccessor"
   members = var.public_authorized_users
-
-  depends_on = [google_iap_client.project_client]
 }
 
 # Custom IAM Policy for IAP Admin Role
@@ -58,8 +45,6 @@ resource "google_project_iam_member" "iap_policy_admin" {
   project = var.gcp_project_id
   role    = "roles/iap.admin"
   member  = "serviceAccount:${var.service_account_email}"
-
-  depends_on = [google_iap_client.project_client]
 }
 
 # Log sink for IAP access logs
