@@ -110,7 +110,7 @@ resource "google_cloud_run_service" "frontend_primary" {
       timeout_seconds      = var.cloud_run_timeout
 
       containers {
-        image = "us-central1-docker.pkg.dev/${var.gcp_project_id}/${var.artifact_registry_repo}/looply-frontend:latest"
+        image = "us-central1-docker.pkg.dev/${var.gcp_project_id}/${var.artifact_registry_repo}/looply-front:latest"
 
         env {
           name  = "REACT_APP_API_URL"
@@ -130,7 +130,7 @@ resource "google_cloud_run_service" "frontend_primary" {
         }
 
         ports {
-          container_port = 3000
+          container_port = 8080
           name           = "http1"
         }
       }
