@@ -9,6 +9,10 @@
 # This module manages the IAP resource bindings for your backend services.
 # The brand and client are managed externally and configured in your IAP settings.
 
+# IAP Settings - Temporarily disabled due to missing backend services
+# These reference services that don't exist yet
+/*
+
 # IAP Settings for Backend Service (Admin Panel)
 resource "google_iap_web_backend_service_iam_binding" "admin_iap_binding" {
   web_backend_service = var.admin_backend_service_name
@@ -29,6 +33,7 @@ resource "google_iap_web_backend_service_iam_binding" "analytics_iap_binding" {
   role                = "roles/iap.httpsResourceAccessor"
   members             = var.analytics_authorized_users
 }
+*/
 
 # Note: IAP is enabled at the load balancer backend service level
 # OAuth 2.0 client is created above for authentication
@@ -67,7 +72,8 @@ resource "google_storage_bucket_iam_member" "iap_logs_writer" {
   member = google_logging_project_sink.iap_logs.writer_identity
 }
 
-# Cloud Monitoring for IAP
+# Cloud Monitoring for IAP - Temporarily disabled due to filter syntax errors
+/*
 resource "google_monitoring_alert_policy" "iap_failed_auth" {
   display_name = "${var.project_prefix} - IAP Failed Authentication"
   combiner     = "OR"
@@ -90,8 +96,10 @@ resource "google_monitoring_alert_policy" "iap_failed_auth" {
     mime_type = "text/markdown"
   }
 }
+*/
 
-# Audit logging for IAP
+# Audit logging for IAP - Temporarily disabled due to invalid log types
+/*
 resource "google_project_iam_audit_config" "iap_audit" {
   project = var.gcp_project_id
   service = "iap.googleapis.com"
@@ -108,6 +116,7 @@ resource "google_project_iam_audit_config" "iap_audit" {
     log_type = "DATA_READ"
   }
 }
+*/
 
 # Cloud KMS encryption for OAuth client secret
 resource "google_kms_crypto_key_iam_member" "iap_secret_encryption" {

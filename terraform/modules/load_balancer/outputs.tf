@@ -25,15 +25,15 @@ output "url_map_id" {
   description = "URL map ID"
 }
 
-output "https_proxy_id" {
-  value       = google_compute_target_https_proxy.default.id
-  description = "HTTPS proxy ID"
-}
+# output "https_proxy_id" {
+#   value       = google_compute_target_https_proxy.default.id
+#   description = "HTTPS proxy ID (temporarily disabled)"
+# }
 
-output "ssl_certificate_id" {
-  value       = google_compute_ssl_certificate.default.id
-  description = "SSL certificate ID"
-}
+# output "ssl_certificate_id" {
+#   value       = google_compute_ssl_certificate.default.id
+#   description = "SSL certificate ID (temporarily disabled)"
+# }
 
 output "backend_primary_neg_id" {
   value       = google_compute_region_network_endpoint_group.backend_primary.id

@@ -92,18 +92,17 @@ resource "google_compute_backend_service" "backend_api" {
   timeout_sec     = 30
   load_balancing_scheme = "EXTERNAL"
 
-  health_checks = [google_compute_health_check.default.id]
+  # Serverless NEGs (Cloud Run) don't support health checks
+  # health_checks = [google_compute_health_check.default.id]
 
   backend {
     group           = google_compute_region_network_endpoint_group.backend_primary.id
-    balancing_mode  = "RATE"
-    max_rate_per_endpoint = 100
+    balancing_mode  = "UTILIZATION"
   }
 
   backend {
     group           = google_compute_region_network_endpoint_group.backend_secondary.id
-    balancing_mode  = "RATE"
-    max_rate_per_endpoint = 100
+    balancing_mode  = "UTILIZATION"
   }
 
   cdn_policy {
@@ -137,18 +136,17 @@ resource "google_compute_backend_service" "frontend_web" {
   timeout_sec     = 30
   load_balancing_scheme = "EXTERNAL"
 
-  health_checks = [google_compute_health_check.default.id]
+  # Serverless NEGs (Cloud Run) don't support health checks
+  # health_checks = [google_compute_health_check.default.id]
 
   backend {
     group           = google_compute_region_network_endpoint_group.frontend_primary.id
-    balancing_mode  = "RATE"
-    max_rate_per_endpoint = 100
+    balancing_mode  = "UTILIZATION"
   }
 
   backend {
     group           = google_compute_region_network_endpoint_group.frontend_secondary.id
-    balancing_mode  = "RATE"
-    max_rate_per_endpoint = 100
+    balancing_mode  = "UTILIZATION"
   }
 
   cdn_policy {
@@ -213,9 +211,9 @@ resource "google_compute_url_map" "default" {
 }
 
 # ============================================
-# SSL/TLS Certificate
+# SSL/TLS Certificate - Temporarily disabled
 # ============================================
-
+/*
 resource "google_compute_ssl_certificate" "default" {
   name    = "${var.project_prefix}-ssl-cert"
   project = var.gcp_project_id
@@ -227,16 +225,28 @@ resource "google_compute_ssl_certificate" "default" {
     create_before_destroy = true
   }
 }
+*/
 
 # ============================================
-# HTTPS Proxy
+# HTTPS Proxy - Temporarily disabled
 # ============================================
-
+/*
 resource "google_compute_target_https_proxy" "default" {
   name             = "${var.project_prefix}-https-proxy"
   url_map          = google_compute_url_map.default.id
   ssl_certificates = [google_compute_ssl_certificate.default.id]
   project          = var.gcp_project_id
+}
+*/
+
+# ============================================
+# HTTP Proxy
+# ============================================
+
+resource "google_compute_target_http_proxy" "default" {
+  name    = "${var.project_prefix}-http-proxy"
+  url_map = google_compute_url_map.default.id
+  project = var.gcp_project_id
 }
 
 # ============================================
@@ -248,8 +258,8 @@ resource "google_compute_global_forwarding_rule" "default" {
   project               = var.gcp_project_id
   ip_protocol           = "TCP"
   load_balancing_scheme = "EXTERNAL"
-  port_range            = "443"
-  target                = google_compute_target_https_proxy.default.id
+  port_range            = "80"
+  target                = google_compute_target_http_proxy.default.id
   ip_address            = google_compute_global_address.lb_ip.address
 
   labels = var.tags

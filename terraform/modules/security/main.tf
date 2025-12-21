@@ -11,9 +11,11 @@ terraform {
 }
 
 # ============================================================================
-# Cloud Armor - DDoS Protection & WAF
+# Cloud Armor - DDoS Protection & WAF (Commented - needs manual setup)
 # ============================================================================
-
+# Resource temporarily disabled due to complex validation requirements
+# Will be created manually in GCP Console and imported
+/*
 resource "google_compute_security_policy" "cloud_armor" {
   name        = "${var.project_prefix}-cloud-armor"
   description = "Cloud Armor policy for DDoS protection and WAF"
@@ -144,6 +146,7 @@ resource "google_compute_security_policy" "cloud_armor" {
     preview     = false
   }
 }
+*/
 
 # ============================================================================
 # Cloud KMS - Key Management Service

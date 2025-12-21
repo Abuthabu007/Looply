@@ -86,8 +86,8 @@ output "artifact_registry" {
 
 output "security" {
   value = {
-    cloud_armor_policy_id      = module.security.cloud_armor_policy_id
-    cloud_armor_policy_name    = module.security.cloud_armor_policy_name
+    # cloud_armor_policy_id      = module.security.cloud_armor_policy_id
+    # cloud_armor_policy_name    = module.security.cloud_armor_policy_name
     kms_keyring_id             = module.security.kms_keyring_id
     kms_main_key_id            = module.security.kms_main_key_id
     kms_database_key_id        = module.security.kms_database_key_id
@@ -118,12 +118,12 @@ output "iap" {
   value = {
     oauth_client_id             = module.iap.iap_client_id
     iap_brand_name              = module.iap.iap_brand_name
-    admin_iap_binding_role      = module.iap.admin_iap_binding_role
-    user_mgmt_iap_binding_role  = module.iap.user_mgmt_iap_binding_role
-    analytics_iap_binding_role  = module.iap.analytics_iap_binding_role
+    # admin_iap_binding_role      = module.iap.admin_iap_binding_role
+    # user_mgmt_iap_binding_role  = module.iap.user_mgmt_iap_binding_role
+    # analytics_iap_binding_role  = module.iap.analytics_iap_binding_role
     iap_logs_sink_name          = module.iap.iap_logs_sink_name
     iap_logs_destination        = module.iap.iap_logs_destination
-    alert_policy_name           = module.iap.iap_monitoring_alert_policy_name
+    # alert_policy_name           = module.iap.iap_monitoring_alert_policy_name
   }
   description = "IAP (Identity-Aware Proxy) resources and OAuth configuration"
   sensitive   = false

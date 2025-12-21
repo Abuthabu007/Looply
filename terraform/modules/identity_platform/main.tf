@@ -8,7 +8,8 @@ resource "google_project_service" "identity_platform_api" {
   disable_on_destroy = false
 }
 
-# Identity Platform Config
+# Identity Platform Config - Temporarily disabled (requires quota project)
+/*
 resource "google_identity_platform_config" "default" {
   project = var.gcp_project_id
 
@@ -40,3 +41,4 @@ resource "google_identity_platform_default_supported_idp_config" "google" {
 
   depends_on = [google_identity_platform_oauth_idp_config.google]
 }
+*/
