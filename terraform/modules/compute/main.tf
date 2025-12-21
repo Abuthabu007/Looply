@@ -30,7 +30,7 @@ resource "google_cloud_run_service" "backend_primary" {
       timeout_seconds      = var.cloud_run_timeout
 
       containers {
-        image = "${var.primary_region}-docker.pkg.dev/${var.gcp_project_id}/${var.artifact_registry_repo}/looply-backend:latest"
+        image = "us-central1-docker.pkg.dev/${var.gcp_project_id}/${var.artifact_registry_repo}/looply-backend:latest"
 
         env {
           name  = "PROJECT_ID"
@@ -110,7 +110,7 @@ resource "google_cloud_run_service" "frontend_primary" {
       timeout_seconds      = var.cloud_run_timeout
 
       containers {
-        image = "${var.primary_region}-docker.pkg.dev/${var.gcp_project_id}/${var.artifact_registry_repo}/looply-frontend:latest"
+        image = "us-central1-docker.pkg.dev/${var.gcp_project_id}/${var.artifact_registry_repo}/looply-frontend:latest"
 
         env {
           name  = "REACT_APP_API_URL"
@@ -174,7 +174,7 @@ resource "google_cloud_run_service" "backend_secondary" {
       timeout_seconds      = var.cloud_run_timeout
 
       containers {
-        image = "${var.secondary_region}-docker.pkg.dev/${var.gcp_project_id}/${var.artifact_registry_repo}/looply-backend:latest"
+        image = "us-central1-docker.pkg.dev/${var.gcp_project_id}/${var.artifact_registry_repo}/looply-backend:latest"
 
         env {
           name  = "PROJECT_ID"
@@ -258,7 +258,7 @@ resource "google_cloud_run_service" "frontend_secondary" {
       timeout_seconds      = var.cloud_run_timeout
 
       containers {
-        image = "${var.secondary_region}-docker.pkg.dev/${var.gcp_project_id}/${var.artifact_registry_repo}/looply-frontend:latest"
+        image = "us-central1-docker.pkg.dev/${var.gcp_project_id}/${var.artifact_registry_repo}/looply-frontend:latest"
 
         env {
           name  = "REACT_APP_API_URL"
