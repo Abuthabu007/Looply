@@ -244,9 +244,8 @@ resource "google_compute_url_map" "default" {
 # }
 
 # ============================================
-# SSL/TLS Certificate - Temporarily disabled
+# SSL/TLS Certificate - ENABLED FOR IAP
 # ============================================
-/*
 resource "google_compute_ssl_certificate" "default" {
   name    = "${var.project_prefix}-ssl-cert"
   project = var.gcp_project_id
@@ -258,19 +257,16 @@ resource "google_compute_ssl_certificate" "default" {
     create_before_destroy = true
   }
 }
-*/
 
 # ============================================
-# HTTPS Proxy - Temporarily disabled
+# HTTPS Proxy - ENABLED FOR IAP
 # ============================================
-/*
 resource "google_compute_target_https_proxy" "default" {
   name             = "${var.project_prefix}-https-proxy"
   url_map          = google_compute_url_map.default.id
   ssl_certificates = [google_compute_ssl_certificate.default.id]
   project          = var.gcp_project_id
 }
-*/
 
 # ============================================
 # HTTP Proxy
@@ -320,6 +316,22 @@ resource "google_compute_global_forwarding_rule" "http_redirect" {
   port_range            = "80"
   target                = google_compute_target_http_proxy.http_redirect.id
   ip_address            = google_compute_global_address.http_redirect_ip.address
+}
+
+# ============================================
+# HTTPS Forwarding Rule - IAP Primary Entry Point
+# ============================================
+
+resource "google_compute_global_forwarding_rule" "default" {
+  name                  = "${var.project_prefix}-forwarding-rule"
+  project               = var.gcp_project_id
+  ip_protocol           = "TCP"
+  load_balancing_scheme = "EXTERNAL"
+  port_range            = "443"
+  target                = google_compute_target_https_proxy.default.id
+  ip_address            = google_compute_global_address.lb_ip.address
+
+  labels = var.tags
 }
 
 # ============================================
