@@ -176,39 +176,66 @@ resource "google_compute_backend_service" "frontend_web" {
 
 resource "google_compute_url_map" "default" {
   name            = "${var.project_prefix}-url-map"
-  default_service = google_compute_backend_service.frontend_web.id
   project         = var.gcp_project_id
+  default_service = google_compute_backend_service.frontend_web.id
+
+  host_rule {
+    hosts        = ["looply.co.in"]
+    path_matcher = "main-matcher"
+  }
 
   path_matcher {
-    name            = "backend-api"
-    default_service = google_compute_backend_service.backend_api.id
+    name            = "main-matcher"
+    default_service = google_compute_backend_service.frontend_web.id
 
     path_rule {
       paths   = ["/api/*", "/health"]
       service = google_compute_backend_service.backend_api.id
     }
-  }
-
-  path_matcher {
-    name            = "frontend-web"
-    default_service = google_compute_backend_service.frontend_web.id
 
     path_rule {
       paths   = ["/*"]
       service = google_compute_backend_service.frontend_web.id
     }
   }
-
-  host_rule {
-    hosts        = ["api.*", "backend.*"]
-    path_matcher = "backend-api"
-  }
-
-  host_rule {
-    hosts        = ["*"]
-    path_matcher = "frontend-web"
-  }
 }
+
+
+# resource "google_compute_url_map" "default" {
+  # name            = "${var.project_prefix}-url-map"
+  # default_service = google_compute_backend_service.frontend_web.id
+  # project         = var.gcp_project_id
+# 
+  # path_matcher {
+    # name            = "backend-api"
+    # default_service = google_compute_backend_service.backend_api.id
+# 
+    # path_rule {
+      # paths   = ["/api/*", "/health"]
+      # service = google_compute_backend_service.backend_api.id
+    # }
+  # }
+# 
+  # path_matcher {
+    # name            = "frontend-web"
+    # default_service = google_compute_backend_service.frontend_web.id
+# 
+    # path_rule {
+      # paths   = ["/*"]
+      # service = google_compute_backend_service.frontend_web.id
+    # }
+  # }
+# 
+  # host_rule {
+    # hosts        = ["api.*", "backend.*"]
+    # path_matcher = "backend-api"
+  # }
+# 
+  # host_rule {
+    # hosts        = ["*"]
+    # path_matcher = "frontend-web"
+  # }
+# }
 
 # ============================================
 # SSL/TLS Certificate - Temporarily disabled
