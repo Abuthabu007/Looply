@@ -2,7 +2,12 @@
 
 output "global_ip_address" {
   value       = google_compute_global_address.lb_ip.address
-  description = "Global load balancer IP address"
+  description = "Global load balancer IP address (reserved for future HTTPS use)"
+}
+
+output "http_redirect_ip_address" {
+  value       = google_compute_global_address.http_redirect_ip.address
+  description = "HTTP redirect load balancer IP address (port 80, redirects to HTTPS)"
 }
 
 output "load_balancer_url" {

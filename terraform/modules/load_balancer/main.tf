@@ -11,6 +11,14 @@ resource "google_compute_global_address" "lb_ip" {
   labels = var.tags
 }
 
+# Separate IP address for HTTP redirect (port 80)
+resource "google_compute_global_address" "http_redirect_ip" {
+  name    = "${var.project_prefix}-http-redirect-ip"
+  project = var.gcp_project_id
+
+  labels = var.tags
+}
+
 # Serverless NEG for Backend - Primary Region
 resource "google_compute_region_network_endpoint_group" "backend_primary" {
   name                  = "${var.project_prefix}-neg-backend-primary"
@@ -277,20 +285,13 @@ resource "google_compute_target_http_proxy" "default" {
 }
 
 # ============================================
-# Global Forwarding Rule
+# Global Forwarding Rule - HTTP only (redirects to HTTPS)
 # ============================================
 
-resource "google_compute_global_forwarding_rule" "default" {
-  name                  = "${var.project_prefix}-forwarding-rule"
-  project               = var.gcp_project_id
-  ip_protocol           = "TCP"
-  load_balancing_scheme = "EXTERNAL"
-  port_range            = "80"
-  target                = google_compute_target_http_proxy.default.id
-  ip_address            = google_compute_global_address.lb_ip.address
+# NOTE: The default forwarding rule on port 80 with HTTP-to-HTTPS redirect
+# is handled by the http_redirect resources below.
+# For HTTPS support, uncomment the target_https_proxy and ssl_certificate resources.
 
-  labels = var.tags
-}
 
 # ============================================
 # HTTP to HTTPS Redirect
@@ -320,7 +321,7 @@ resource "google_compute_global_forwarding_rule" "http_redirect" {
   load_balancing_scheme = "EXTERNAL"
   port_range            = "80"
   target                = google_compute_target_http_proxy.http_redirect.id
-  ip_address            = google_compute_global_address.lb_ip.address
+  ip_address            = google_compute_global_address.http_redirect_ip.address
 }
 
 # ============================================

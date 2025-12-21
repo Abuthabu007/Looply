@@ -57,6 +57,11 @@ resource "google_cloud_run_service" "backend_primary" {
           value = var.gcp_project_id
         }
 
+        env {
+          name  = "PUBLIC_PATH"
+          value = "/"
+        }
+
         resources {
           limits = {
             cpu    = var.cloud_run_cpu
@@ -69,14 +74,6 @@ resource "google_cloud_run_service" "backend_primary" {
           name           = "http1"
         }
       }
-    }
-
-    metadata {
-      annotations = {
-        "autoscaling.knative.dev/maxScale" = var.cloud_run_max_instances
-        "autoscaling.knative.dev/minScale" = 1
-      }
-      labels = { region = var.primary_region }
     }
   }
 
@@ -199,6 +196,11 @@ resource "google_cloud_run_service" "backend_secondary" {
         env {
           name  = "PUBSUB_PROJECT"
           value = var.gcp_project_id
+        }
+
+        env {
+          name  = "PUBLIC_PATH"
+          value = "/"
         }
 
         resources {
