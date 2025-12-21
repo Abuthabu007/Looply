@@ -91,14 +91,12 @@ resource "google_compute_health_check" "default" {
 
 # ============================================
 # Backend Service for API - with CDN
-# ============================================
-
 resource "google_compute_backend_service" "backend_api" {
-  name            = "${var.project_prefix}-backend-api-service"
-  project         = var.gcp_project_id
-  protocol        = "HTTP"
-  timeout_sec     = 30
-  load_balancing_scheme = "EXTERNAL"
+  name                      = "${var.project_prefix}-backend-api-service"
+  project                   = var.gcp_project_id
+  protocol                  = "HTTP"
+  timeout_sec               = 30
+  load_balancing_scheme     = "EXTERNAL"
 
   # Serverless NEGs (Cloud Run) don't support health checks
   # health_checks = [google_compute_health_check.default.id]
@@ -138,11 +136,11 @@ resource "google_compute_backend_service" "backend_api" {
 # ============================================
 
 resource "google_compute_backend_service" "frontend_web" {
-  name            = "${var.project_prefix}-frontend-web-service"
-  project         = var.gcp_project_id
-  protocol        = "HTTP"
-  timeout_sec     = 30
-  load_balancing_scheme = "EXTERNAL"
+  name                      = "${var.project_prefix}-frontend-web-service"
+  project                   = var.gcp_project_id
+  protocol                  = "HTTP"
+  timeout_sec               = 30
+  load_balancing_scheme     = "EXTERNAL"
 
   # Serverless NEGs (Cloud Run) don't support health checks
   # health_checks = [google_compute_health_check.default.id]
@@ -346,4 +344,24 @@ resource "google_compute_firewall" "allow_lb_health_check" {
   ]
 
   target_tags = ["load-balancer"]
+}
+
+# ============================================
+# IAP (Identity-Aware Proxy) Configuration
+# ============================================
+
+# IAP Settings for Backend API Service
+resource "google_iap_web_backend_service_iam_binding" "backend_api" {
+  count               = var.enable_iap && var.google_oauth_client_id != "" ? 1 : 0
+  web_backend_service = google_compute_backend_service.backend_api.name
+  role                = "roles/iap.httpsResourceAccessor"
+  members             = []  # This will be managed by the IAP module
+}
+
+# IAP Settings for Frontend Web Service
+resource "google_iap_web_backend_service_iam_binding" "frontend_web" {
+  count               = var.enable_iap && var.google_oauth_client_id != "" ? 1 : 0
+  web_backend_service = google_compute_backend_service.frontend_web.name
+  role                = "roles/iap.httpsResourceAccessor"
+  members             = []  # This will be managed by the IAP module
 }

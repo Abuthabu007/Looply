@@ -143,6 +143,8 @@ module "load_balancer" {
   ssl_private_key           = var.ssl_private_key
   storage_bucket_name       = module.storage.videos_bucket_name
   vpc_network_name          = module.networking.vpc_network_name
+  google_oauth_client_id    = var.google_oauth_client_id
+  enable_iap                = true
   
   tags = local.common_labels
 

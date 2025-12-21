@@ -37,3 +37,15 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "google_oauth_client_id" {
+  description = "Google OAuth 2.0 Client ID for IAP"
+  type        = string
+  default     = ""
+}
+
+variable "enable_iap" {
+  description = "Enable Identity-Aware Proxy on backend services"
+  type        = bool
+  default     = true
+}
