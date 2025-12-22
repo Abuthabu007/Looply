@@ -47,6 +47,19 @@ resource "google_project_iam_member" "cloud_run_storage_admin" {
   member  = "serviceAccount:${google_service_account.cloud_run_sa.email}"
 }
 
+resource "google_project_iam_member" "cloud_run_service_account_user" {
+  project = var.gcp_project_id
+  role    = "roles/iam.serviceAccountUser"
+  member  = "serviceAccount:${google_service_account.cloud_run_sa.email}"
+}
+
+# Custom role binding for signBlob permission on the service account itself
+resource "google_service_account_iam_member" "cloud_run_sign_blob" {
+  service_account_id = google_service_account.cloud_run_sa.name
+  role               = "roles/iam.serviceAccountTokenCreator"
+  member             = "serviceAccount:${google_service_account.cloud_run_sa.email}"
+}
+
 # ============================================
 # Pub/Sub Service Account
 # ============================================
