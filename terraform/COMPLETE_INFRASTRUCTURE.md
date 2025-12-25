@@ -14,6 +14,10 @@
 │  │ Cloud Armor  │  │  Cloud KMS   │  │  Secret Manager          │   │
 │  │ (DDoS+WAF)   │  │ (Encryption) │  │ (Secrets)                │   │
 │  └──────────────┘  └──────────────┘  └──────────────────────────┘   │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │    Identity-Aware Proxy (IAP)                                │   │
+│  │    OAuth 2.0 · RBAC · Audit Logging                          │   │
+│  └──────────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────────┘
                                 ↓
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -69,12 +73,16 @@
 │                     OBSERVABILITY LAYER                             │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐   │
 │  │ Cloud Logging│  │ Cloud Monitor│  │  Alert Policies          │   │
-│  │ (Logs→CS)    │  │ (Metrics)    │  │ (9 critical alerts)      │   │
+│  │ (Logs→CS)    │  │ (Metrics)    │  │ (10 critical alerts)     │   │
 │  └──────────────┘  └──────────────┘  └──────────────────────────┘   │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐   │
 │  │ Dashboards   │  │ Uptime Checks│  │  Notification Channels   │   │
 │  │ (Real-time)  │  │ (3 regions)  │  │ (Email + Slack)          │   │
 │  └──────────────┘  └──────────────┘  └──────────────────────────┘   │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │ IAP Audit Logging                                            │   │
+│  │ - Failed auth attempts  - Access logs  - Token events        │   │
+│  └──────────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -181,6 +189,46 @@
 
 ---
 
+#### 8. **Identity-Aware Proxy (IAP)** ✅ (NEW)
+- OAuth 2.0 authentication
+- Backend service bindings
+- User/Group authorization
+- Role-based access control (RBAC)
+- Audit logging (Cloud Logging)
+- Cloud Monitoring alerts
+- KMS encryption for secrets
+
+**Features**:
+- Admin panel protection
+- User management API protection
+- Analytics dashboard protection
+- Public access options
+- Failed auth alerts
+- Integration with load balancer
+
+**Configuration**:
+- Admin users: 5 authorized accounts
+- User management: 3 authorized accounts
+- Analytics: 3 authorized accounts
+- Public access: Disabled (restrictive)
+- Alerts: Enabled for failed auth
+- Failed auth threshold: 50 in 5 minutes
+
+**OAuth Setup** (requires manual GCP Console config):
+```
+1. Create OAuth consent screen
+2. Create OAuth 2.0 Client ID (Web Application)
+3. Add authorized redirect URIs
+4. Copy client ID and secret to terraform.tfvars
+5. Add to authorized users list
+6. Deploy with terraform apply
+```
+
+**Status**: ✅ Configured in infrastructure  
+⚠️ **Activation**: Requires `google_oauth_client_id` in terraform.tfvars
+
+---
+
 ### Security & Observability Modules (NEW)
 
 #### 8. **Security** ✨ (NEW)
@@ -190,6 +238,7 @@
 - IAM bindings
 - Key rotation policies
 - Automatic secret replication
+- IAP Secret Encryption (KMS-managed)
 
 **Security Features**:
 - Rate limiting
@@ -197,17 +246,19 @@
 - OWASP protection
 - Key management
 - Secret rotation
+- OAuth secret protection (KMS encrypted)
+- IAP service account permissions
 
 ---
 
 #### 9. **Monitoring** ✨ (NEW)
 - Cloud Monitoring (metrics)
 - Cloud Logging (log management)
-- 9 alert policies
+- 9 alert policies (including IAP auth failures)
 - Notification channels
 - Custom dashboards
 - Uptime checks
-- Log sinks
+- Log sinks (including IAP logs)
 
 **Alerts**:
 - Cloud Run metrics
@@ -215,6 +266,18 @@
 - Database performance
 - Storage growth
 - API availability
+- ⭐ IAP Failed Authentication
+- Load Balancer status
+
+**IAP Monitoring**:
+- Failed auth attempt logging
+- Alert when threshold exceeded (50 failures/5 min)
+- Access logs to Cloud Storage
+- Real-time metrics dashboard
+
+---
+
+#### 10. **Monitoring** ✨ (NEW - DUPLICATE REMOVED)
 
 ---
 
@@ -234,7 +297,11 @@
 | Secrets (SM) | 4 |
 | Alert Policies | 9 |
 | Notification Channels | 2+ |
-| **TOTAL** | **~65+** |
+| **IAP Components** | **4** |
+| IAP Backend Service Bindings | 2 |
+| IAP Admin Role Bindings | 1 |
+| IAP Log Sinks | 1 |
+| **TOTAL** | **~75+** |
 
 ---
 
@@ -277,9 +344,15 @@
 ```
 User Request
     ↓
-Cloud Armor (DDoS protection)
-    ↓
 HTTPS/TLS (SSL cert from Secret Manager)
+    ↓
+Cloud Armor (DDoS protection + WAF)
+    ↓
+Identity-Aware Proxy (IAP)
+    ├─ OAuth 2.0 authentication
+    ├─ Token verification
+    ├─ Role-based authorization (RBAC)
+    └─ Audit logging
     ↓
 IAM Authentication (Service Account)
     ↓
@@ -290,7 +363,24 @@ Secret Manager (Access secrets)
 VPC Network (Private networking)
     ↓
 Cloud Run Service
+    ↓
+Firestore + BigQuery (Encrypted data)
 ```
+
+---
+
+## 🔐 IAP Access Control Matrix
+
+| Service | Admin | User Mgmt | Analytics | Public |
+|---------|-------|-----------|-----------|--------|
+| **Backend API** | ✅ Binding | ✅ Binding | ✅ Binding | ❌ No |
+| **Frontend Web** | ✅ Binding | ✅ Binding | ✅ Binding | ❌ No |
+| **OAuth Required** | Yes | Yes | Yes | No |
+| **Role Verification** | Yes | Yes | Yes | No |
+| **Audit Logging** | ✅ Enabled | ✅ Enabled | ✅ Enabled | N/A |
+| **Status** | ✅ Ready* | ✅ Ready* | ✅ Ready* | ⏳ Optional |
+
+**Ready* = Requires OAuth Client ID in terraform.tfvars**
 
 ---
 
@@ -371,6 +461,19 @@ terraform output
 - [ ] Review `allowed_countries` for geo-blocking
 - [ ] Set strong passwords for secrets
 
+### IAP Configuration (Optional but Recommended)
+- [ ] Create OAuth 2.0 consent screen in GCP Console
+- [ ] Create OAuth 2.0 Client ID (Web Application type)
+- [ ] Add authorized redirect URIs
+- [ ] Copy `google_oauth_client_id` to terraform.tfvars
+- [ ] Copy `google_oauth_client_secret` to terraform.tfvars
+- [ ] Add authorized user emails to:
+  - `iap_admin_authorized_users`
+  - `iap_user_mgmt_authorized_users`
+  - `iap_analytics_authorized_users`
+- [ ] Set `iap_enable_alerts = true`
+- [ ] (Optional) Configure public access: `iap_enable_public_access = true`
+
 ### After Deployment
 - [ ] Verify Cloud Armor policy in console
 - [ ] Test alert channels (send test alert)
@@ -378,6 +481,9 @@ terraform output
 - [ ] Verify secrets in Secret Manager
 - [ ] View dashboard in Cloud Console
 - [ ] Check uptime check status
+- [ ] **[NEW]** Verify IAP bindings are active (if OAuth configured)
+- [ ] **[NEW]** Test IAP authentication flow
+- [ ] **[NEW]** Check IAP audit logs in Cloud Logging
 
 ---
 
