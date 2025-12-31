@@ -5,11 +5,11 @@
 # ============================================
 
 resource "google_firestore_database" "main" {
-  project                 = var.gcp_project_id
-  name                    = "(default)"
-  location_id             = var.firestore_region
-  type                    = "FIRESTORE_NATIVE"
-  concurrency_mode        = "OPTIMISTIC"
+  project                           = var.gcp_project_id
+  name                              = "(default)"
+  location_id                       = var.firestore_region
+  type                              = "FIRESTORE_NATIVE"
+  concurrency_mode                  = "OPTIMISTIC"
   point_in_time_recovery_enablement = var.enable_pitr ? "POINT_IN_TIME_RECOVERY_ENABLED" : "POINT_IN_TIME_RECOVERY_DISABLED"
 
 
@@ -25,7 +25,7 @@ resource "google_bigquery_dataset" "analytics" {
   description                 = "Analytics data for Looply streaming platform"
   project                     = var.gcp_project_id
   location                    = var.bigquery_dataset_location
-  default_table_expiration_ms = 7776000000  # 90 days
+  default_table_expiration_ms = 7776000000 # 90 days
 
   labels = var.tags
 }

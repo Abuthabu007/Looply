@@ -202,9 +202,9 @@ resource "google_kms_crypto_key" "storage_key" {
 
 resource "google_secret_manager_secret" "ssl_certificate" {
   secret_id = "${var.project_prefix}-ssl-cert"
-  
+
   labels = var.tags
-  
+
   replication {
     auto {}
   }
@@ -218,9 +218,9 @@ resource "google_secret_manager_secret_version" "ssl_certificate_version" {
 # Database password secret
 resource "google_secret_manager_secret" "db_password" {
   secret_id = "${var.project_prefix}-db-password"
-  
+
   labels = var.tags
-  
+
   replication {
     auto {}
   }
@@ -234,9 +234,9 @@ resource "google_secret_manager_secret_version" "db_password_version" {
 # API Key secret for third-party integrations
 resource "google_secret_manager_secret" "api_key" {
   secret_id = "${var.project_prefix}-api-key"
-  
+
   labels = var.tags
-  
+
   replication {
     auto {}
   }
@@ -250,9 +250,9 @@ resource "google_secret_manager_secret_version" "api_key_version" {
 # OAuth client secret
 resource "google_secret_manager_secret" "oauth_secret" {
   secret_id = "${var.project_prefix}-oauth-secret"
-  
+
   labels = var.tags
-  
+
   replication {
     auto {}
   }
@@ -275,7 +275,7 @@ resource "google_secret_manager_secret_iam_member" "cloud_run_secrets" {
     api_key         = google_secret_manager_secret.api_key.id
     oauth_secret    = google_secret_manager_secret.oauth_secret.id
   }
-  
+
   secret_id = each.value
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${var.cloud_run_sa_email}"
@@ -287,7 +287,7 @@ resource "google_secret_manager_secret_iam_member" "scheduler_secrets" {
     db_password = google_secret_manager_secret.db_password.id
     api_key     = google_secret_manager_secret.api_key.id
   }
-  
+
   secret_id = each.value
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${var.scheduler_sa_email}"
@@ -304,7 +304,7 @@ resource "google_kms_crypto_key_iam_member" "cloud_run_kms" {
     database_key = google_kms_crypto_key.database_key.id
     storage_key  = google_kms_crypto_key.storage_key.id
   }
-  
+
   crypto_key_id = each.value
   role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
   member        = "serviceAccount:${var.cloud_run_sa_email}"

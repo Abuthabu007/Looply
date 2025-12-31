@@ -30,7 +30,7 @@ resource "google_cloud_run_service" "backend_primary" {
       timeout_seconds      = var.cloud_run_timeout
 
       containers {
-        image = "us-central1-docker.pkg.dev/${var.gcp_project_id}/${var.artifact_registry_repo}/looply-backend:latest"
+        image = "us-central1-docker.pkg.dev/${var.gcp_project_id}/${var.artifact_registry_repo}/backend:latest"
 
         env {
           name  = "PROJECT_ID"
@@ -84,12 +84,16 @@ resource "google_cloud_run_service" "backend_primary" {
 }
 
 # Allow public access to backend
-resource "google_cloud_run_service_iam_member" "backend_public_primary" {
+# NOTE: Commented out due to organization policy restrictions
+# Public access is handled via load balancer instead
+
+/* resource "google_cloud_run_service_iam_member" "backend_public_primary" {
   service  = google_cloud_run_service.backend_primary.name
   location = var.primary_region
   role     = "roles/run.invoker"
   member   = "allUsers"
 }
+*/
 
 # ============================================
 # Frontend Cloud Run Service - Primary Region
@@ -107,7 +111,7 @@ resource "google_cloud_run_service" "frontend_primary" {
       timeout_seconds      = var.cloud_run_timeout
 
       containers {
-        image = "us-central1-docker.pkg.dev/${var.gcp_project_id}/${var.artifact_registry_repo}/looply-front:latest"
+        image = "us-central1-docker.pkg.dev/${var.gcp_project_id}/${var.artifact_registry_repo}/frontend:latest"
 
         env {
           name  = "REACT_APP_API_URL"
@@ -149,12 +153,16 @@ resource "google_cloud_run_service" "frontend_primary" {
 }
 
 # Allow public access to frontend
-resource "google_cloud_run_service_iam_member" "frontend_public_primary" {
+# NOTE: Commented out due to organization policy restrictions
+# Public access is handled via load balancer instead
+
+/*resource "google_cloud_run_service_iam_member" "frontend_public_primary" {
   service  = google_cloud_run_service.frontend_primary.name
   location = var.primary_region
   role     = "roles/run.invoker"
   member   = "allUsers"
 }
+*/
 
 # ============================================
 # Backend Cloud Run Service - Secondary Region (EU)
@@ -171,7 +179,7 @@ resource "google_cloud_run_service" "backend_secondary" {
       timeout_seconds      = var.cloud_run_timeout
 
       containers {
-        image = "us-central1-docker.pkg.dev/${var.gcp_project_id}/${var.artifact_registry_repo}/looply-backend:latest"
+        image = "us-central1-docker.pkg.dev/${var.gcp_project_id}/${var.artifact_registry_repo}/backend:latest"
 
         env {
           name  = "PROJECT_ID"
@@ -238,12 +246,16 @@ resource "google_cloud_run_service" "backend_secondary" {
 }
 
 # Allow public access to backend - Secondary Region
-resource "google_cloud_run_service_iam_member" "backend_public_secondary" {
+# NOTE: Commented out due to organization policy restrictions
+# Public access is handled via load balancer instead
+
+/*resource "google_cloud_run_service_iam_member" "backend_public_secondary" {
   service  = google_cloud_run_service.backend_secondary.name
   location = var.secondary_region
   role     = "roles/run.invoker"
   member   = "allUsers"
-}
+}*/
+
 
 # ============================================
 # Frontend Cloud Run Service - Secondary Region (EU)
@@ -260,7 +272,7 @@ resource "google_cloud_run_service" "frontend_secondary" {
       timeout_seconds      = var.cloud_run_timeout
 
       containers {
-        image = "us-central1-docker.pkg.dev/${var.gcp_project_id}/${var.artifact_registry_repo}/looply-frontend:latest"
+        image = "us-central1-docker.pkg.dev/${var.gcp_project_id}/${var.artifact_registry_repo}/frontend:latest"
 
         env {
           name  = "REACT_APP_API_URL"
@@ -280,7 +292,7 @@ resource "google_cloud_run_service" "frontend_secondary" {
         }
 
         ports {
-          container_port = 3000
+          container_port = 8080
           name           = "http1"
         }
       }
@@ -307,9 +319,9 @@ resource "google_cloud_run_service" "frontend_secondary" {
 }
 
 # Allow public access to frontend - Secondary Region
-resource "google_cloud_run_service_iam_member" "frontend_public_secondary" {
+/*resource "google_cloud_run_service_iam_member" "frontend_public_secondary" {
   service  = google_cloud_run_service.frontend_secondary.name
   location = var.secondary_region
   role     = "roles/run.invoker"
   member   = "allUsers"
-}
+}*/

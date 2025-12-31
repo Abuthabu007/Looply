@@ -27,7 +27,7 @@ resource "google_storage_bucket" "videos" {
 
   lifecycle_rule {
     condition {
-      age = 365  # 1 year
+      age = 365 # 1 year
     }
     action {
       type          = "SetStorageClass"
@@ -56,7 +56,7 @@ resource "google_storage_bucket" "analytics" {
 
   lifecycle_rule {
     condition {
-      age = 90  # 90 days
+      age = 90 # 90 days
     }
     action {
       type = "Delete"
@@ -101,7 +101,7 @@ resource "google_storage_bucket" "logs" {
 resource "google_storage_bucket" "backup" {
   name          = "${var.project_prefix}-backup-${var.gcp_project_id}"
   project       = var.gcp_project_id
-  location      = "US"  # Multi-region for redundancy
+  location      = "US" # Multi-region for redundancy
   force_destroy = false
 
   uniform_bucket_level_access = true

@@ -135,9 +135,9 @@ variable "tags" {
   description = "Common tags to apply to all resources"
   type        = map(string)
   default = {
-    project     = "looply"
-    managed_by  = "terraform"
-    created_at  = "2025-12-16"
+    project    = "looply"
+    managed_by = "terraform"
+    created_at = "2025-12-16"
   }
 }
 # ============================================================================

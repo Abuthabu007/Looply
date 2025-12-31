@@ -25,10 +25,10 @@ module "apis" {
 module "identity_platform" {
   source = "./modules/identity_platform"
 
-  gcp_project_id               = var.gcp_project_id
-  google_oauth_client_id       = var.google_oauth_client_id
-  google_oauth_client_secret   = var.google_oauth_client_secret
-  allowed_redirect_uris        = var.allowed_redirect_uris
+  gcp_project_id             = var.gcp_project_id
+  google_oauth_client_id     = var.google_oauth_client_id
+  google_oauth_client_secret = var.google_oauth_client_secret
+  allowed_redirect_uris      = var.allowed_redirect_uris
 
   depends_on = [module.apis]
 }
@@ -50,14 +50,14 @@ module "service_accounts" {
 module "networking" {
   source = "./modules/networking"
 
-  gcp_project_id                    = var.gcp_project_id
-  project_prefix                    = var.project_prefix
-  primary_region                    = var.primary_region
-  secondary_region                  = var.secondary_region
-  primary_subnet_cidr               = var.primary_subnet_cidr
-  primary_secondary_subnet_cidr     = var.primary_secondary_subnet_cidr
-  secondary_subnet_cidr             = var.secondary_subnet_cidr
-  secondary_secondary_subnet_cidr   = var.secondary_secondary_subnet_cidr
+  gcp_project_id                  = var.gcp_project_id
+  project_prefix                  = var.project_prefix
+  primary_region                  = var.primary_region
+  secondary_region                = var.secondary_region
+  primary_subnet_cidr             = var.primary_subnet_cidr
+  primary_secondary_subnet_cidr   = var.primary_secondary_subnet_cidr
+  secondary_subnet_cidr           = var.secondary_subnet_cidr
+  secondary_secondary_subnet_cidr = var.secondary_secondary_subnet_cidr
 
   tags = local.common_labels
 
@@ -68,16 +68,16 @@ module "networking" {
 module "compute" {
   source = "./modules/compute"
 
-  gcp_project_id              = var.gcp_project_id
-  project_prefix              = var.project_prefix
-  primary_region              = var.primary_region
-  secondary_region            = var.secondary_region
-  artifact_registry_repo      = var.artifact_registry_repo
-  cloud_run_service_account   = module.service_accounts.cloud_run_service_account_email
-  cloud_run_cpu               = var.cloud_run_cpu
-  cloud_run_memory            = var.cloud_run_memory
-  cloud_run_timeout           = var.cloud_run_timeout
-  cloud_run_max_instances     = var.cloud_run_max_instances
+  gcp_project_id            = var.gcp_project_id
+  project_prefix            = var.project_prefix
+  primary_region            = var.primary_region
+  secondary_region          = var.secondary_region
+  artifact_registry_repo    = var.artifact_registry_repo
+  cloud_run_service_account = module.service_accounts.cloud_run_service_account_email
+  cloud_run_cpu             = var.cloud_run_cpu
+  cloud_run_memory          = var.cloud_run_memory
+  cloud_run_timeout         = var.cloud_run_timeout
+  cloud_run_max_instances   = var.cloud_run_max_instances
 
   depends_on = [module.service_accounts, module.apis]
 }
@@ -86,13 +86,13 @@ module "compute" {
 module "pubsub" {
   source = "./modules/pubsub"
 
-  gcp_project_id                          = var.gcp_project_id
-  project_prefix                          = var.project_prefix
-  pubsub_message_retention_duration       = var.pubsub_message_retention_duration
-  cloud_run_primary_service_url           = module.compute.backend_primary_url
-  cloud_run_secondary_service_url         = module.compute.backend_secondary_url
-  cloud_run_service_account_email         = module.service_accounts.cloud_run_service_account_email
-  pubsub_service_account_email            = module.service_accounts.pubsub_service_account_email
+  gcp_project_id                    = var.gcp_project_id
+  project_prefix                    = var.project_prefix
+  pubsub_message_retention_duration = var.pubsub_message_retention_duration
+  cloud_run_primary_service_url     = module.compute.backend_primary_url
+  cloud_run_secondary_service_url   = module.compute.backend_secondary_url
+  cloud_run_service_account_email   = module.service_accounts.cloud_run_service_account_email
+  pubsub_service_account_email      = module.service_accounts.pubsub_service_account_email
 
   tags = local.common_labels
 
@@ -103,13 +103,13 @@ module "pubsub" {
 module "storage" {
   source = "./modules/storage"
 
-  gcp_project_id                   = var.gcp_project_id
-  project_prefix                   = var.project_prefix
-  primary_region                   = var.primary_region
-  log_bucket_retention_days        = var.log_bucket_retention_days
-  video_bucket_versioning          = var.video_bucket_versioning_enabled
-  cloud_run_service_account_email  = module.service_accounts.cloud_run_service_account_email
-  storage_service_account_email    = module.service_accounts.storage_service_account_email
+  gcp_project_id                  = var.gcp_project_id
+  project_prefix                  = var.project_prefix
+  primary_region                  = var.primary_region
+  log_bucket_retention_days       = var.log_bucket_retention_days
+  video_bucket_versioning         = var.video_bucket_versioning_enabled
+  cloud_run_service_account_email = module.service_accounts.cloud_run_service_account_email
+  storage_service_account_email   = module.service_accounts.storage_service_account_email
 
   tags = local.common_labels
 
@@ -120,13 +120,13 @@ module "storage" {
 module "databases" {
   source = "./modules/databases"
 
-  gcp_project_id                    = var.gcp_project_id
-  project_prefix                    = var.project_prefix
-  firestore_region                  = var.firestore_region
-  enable_pitr                       = var.enable_pitr
-  bigquery_dataset_location         = var.bigquery_dataset_location
-  bigquery_service_account_email    = module.service_accounts.bigquery_service_account_email
-  cloud_run_service_account_email   = module.service_accounts.cloud_run_service_account_email
+  gcp_project_id                  = var.gcp_project_id
+  project_prefix                  = var.project_prefix
+  firestore_region                = var.firestore_region
+  enable_pitr                     = var.enable_pitr
+  bigquery_dataset_location       = var.bigquery_dataset_location
+  bigquery_service_account_email  = module.service_accounts.bigquery_service_account_email
+  cloud_run_service_account_email = module.service_accounts.cloud_run_service_account_email
 
   tags = local.common_labels
 
@@ -137,15 +137,15 @@ module "databases" {
 module "load_balancer" {
   source = "./modules/load_balancer"
 
-  gcp_project_id            = var.gcp_project_id
-  project_prefix            = var.project_prefix
-  ssl_certificate           = var.ssl_certificate
-  ssl_private_key           = var.ssl_private_key
-  storage_bucket_name       = module.storage.videos_bucket_name
-  vpc_network_name          = module.networking.vpc_network_name
-  google_oauth_client_id    = var.google_oauth_client_id
-  enable_iap                = true
-  
+  gcp_project_id         = var.gcp_project_id
+  project_prefix         = var.project_prefix
+  ssl_certificate        = var.ssl_certificate
+  ssl_private_key        = var.ssl_private_key
+  storage_bucket_name    = module.storage.videos_bucket_name
+  vpc_network_name       = module.networking.vpc_network_name
+  google_oauth_client_id = var.google_oauth_client_id
+  enable_iap             = true
+
   tags = local.common_labels
 
   depends_on = [module.storage, module.compute, module.networking, module.security, module.apis]
@@ -155,18 +155,18 @@ module "load_balancer" {
 module "security" {
   source = "./modules/security"
 
-  
-  project_prefix            = var.project_prefix
-  primary_region            = var.primary_region
-  ssl_certificate           = var.ssl_certificate
-  db_password               = var.db_password
-  api_key                   = var.api_key
-  oauth_client_secret       = var.oauth_client_secret
-  cloud_run_sa_email        = module.service_accounts.cloud_run_service_account_email
-  scheduler_sa_email        = module.service_accounts.cloud_scheduler_service_account_email
-  bigquery_sa_email         = module.service_accounts.bigquery_service_account_email
-  storage_sa_email          = module.service_accounts.storage_service_account_email
-  allowed_countries         = var.allowed_countries
+
+  project_prefix               = var.project_prefix
+  primary_region               = var.primary_region
+  ssl_certificate              = var.ssl_certificate
+  db_password                  = var.db_password
+  api_key                      = var.api_key
+  oauth_client_secret          = var.oauth_client_secret
+  cloud_run_sa_email           = module.service_accounts.cloud_run_service_account_email
+  scheduler_sa_email           = module.service_accounts.cloud_scheduler_service_account_email
+  bigquery_sa_email            = module.service_accounts.bigquery_service_account_email
+  storage_sa_email             = module.service_accounts.storage_service_account_email
+  allowed_countries            = var.allowed_countries
   security_policy_preview_mode = var.security_policy_preview_mode
 
   tags = local.common_labels
@@ -178,16 +178,16 @@ module "security" {
 module "monitoring" {
   source = "./modules/monitoring"
 
-  
-  project_prefix             = var.project_prefix
-  alert_email_primary        = var.alert_email_primary
-  alert_email_secondary      = var.alert_email_secondary
-  slack_webhook_url          = var.slack_webhook_url
-  slack_channel_name         = var.slack_channel_name
-  storage_growth_threshold   = var.storage_growth_threshold
-  api_endpoint               = var.api_endpoint
-  storage_bucket_logs        = module.storage.logs_bucket_name
-  log_filter                 = var.log_filter
+
+  project_prefix           = var.project_prefix
+  alert_email_primary      = var.alert_email_primary
+  alert_email_secondary    = var.alert_email_secondary
+  slack_webhook_url        = var.slack_webhook_url
+  slack_channel_name       = var.slack_channel_name
+  storage_growth_threshold = var.storage_growth_threshold
+  api_endpoint             = var.api_endpoint
+  storage_bucket_logs      = module.storage.logs_bucket_name
+  log_filter               = var.log_filter
 
   tags = local.common_labels
 
@@ -198,25 +198,25 @@ module "monitoring" {
 module "iap" {
   source = "./modules/iap"
 
-  gcp_project_id                           = var.gcp_project_id
-  project_prefix                           = var.project_prefix
-  support_email                            = var.iap_support_email
-  application_title                        = var.iap_application_title
-  admin_backend_service_name               = var.iap_admin_backend_service
-  user_management_backend_service_name     = var.iap_user_mgmt_backend_service
-  analytics_backend_service_name           = var.iap_analytics_backend_service
-  admin_authorized_users                   = var.iap_admin_authorized_users
-  user_management_authorized_users         = var.iap_user_mgmt_authorized_users
-  analytics_authorized_users               = var.iap_analytics_authorized_users
-  public_authorized_users                  = var.iap_public_authorized_users
-  enable_public_iap_access                 = var.iap_enable_public_access
-  enable_iap_alerts                        = var.iap_enable_alerts
-  failed_auth_threshold                    = var.iap_failed_auth_threshold
-  logs_bucket_name                         = module.storage.logs_bucket_name
-  notification_channel_ids                 = [module.monitoring.email_notification_channel_id]
-  service_account_email                    = module.service_accounts.iap_service_account_email
-  iap_service_account_email                = module.service_accounts.iap_service_account_email
-  kms_crypto_key_id                        = module.security.kms_main_key_id
+  gcp_project_id                       = var.gcp_project_id
+  project_prefix                       = var.project_prefix
+  support_email                        = var.iap_support_email
+  application_title                    = var.iap_application_title
+  admin_backend_service_name           = var.iap_admin_backend_service
+  user_management_backend_service_name = var.iap_user_mgmt_backend_service
+  analytics_backend_service_name       = var.iap_analytics_backend_service
+  admin_authorized_users               = var.iap_admin_authorized_users
+  user_management_authorized_users     = var.iap_user_mgmt_authorized_users
+  analytics_authorized_users           = var.iap_analytics_authorized_users
+  public_authorized_users              = var.iap_public_authorized_users
+  enable_public_iap_access             = var.iap_enable_public_access
+  enable_iap_alerts                    = var.iap_enable_alerts
+  failed_auth_threshold                = var.iap_failed_auth_threshold
+  logs_bucket_name                     = module.storage.logs_bucket_name
+  notification_channel_ids             = [module.monitoring.email_notification_channel_id]
+  service_account_email                = module.service_accounts.iap_service_account_email
+  iap_service_account_email            = module.service_accounts.iap_service_account_email
+  kms_crypto_key_id                    = module.security.kms_main_key_id
 
   tags = local.common_labels
 

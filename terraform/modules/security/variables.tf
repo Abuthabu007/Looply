@@ -64,7 +64,7 @@ variable "allowed_countries" {
   description = "List of country codes to allow (empty = all allowed)"
   type        = list(string)
   default     = []
-  
+
   validation {
     condition     = alltrue([for country in var.allowed_countries : length(country) == 2])
     error_message = "Country codes must be 2-character ISO 3166-1 alpha-2 codes (e.g., 'US', 'GB', 'DE')."
@@ -75,7 +75,7 @@ variable "security_policy_preview_mode" {
   description = "Enable preview mode for security policies (doesn't block, only logs)"
   type        = bool
   default     = true
-  
+
   validation {
     condition     = var.security_policy_preview_mode == true || var.security_policy_preview_mode == false
     error_message = "Must be true or false."

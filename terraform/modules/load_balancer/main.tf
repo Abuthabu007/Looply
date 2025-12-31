@@ -92,36 +92,36 @@ resource "google_compute_health_check" "default" {
 # ============================================
 # Backend Service for API - with CDN
 resource "google_compute_backend_service" "backend_api" {
-  name                      = "${var.project_prefix}-backend-api-service"
-  project                   = var.gcp_project_id
-  protocol                  = "HTTP"
-  timeout_sec               = 30
-  load_balancing_scheme     = "EXTERNAL"
+  name                  = "${var.project_prefix}-backend-api-service"
+  project               = var.gcp_project_id
+  protocol              = "HTTP"
+  timeout_sec           = 30
+  load_balancing_scheme = "EXTERNAL"
 
   # Serverless NEGs (Cloud Run) don't support health checks
   # health_checks = [google_compute_health_check.default.id]
 
   backend {
-    group           = google_compute_region_network_endpoint_group.backend_primary.id
-    balancing_mode  = "UTILIZATION"
+    group          = google_compute_region_network_endpoint_group.backend_primary.id
+    balancing_mode = "UTILIZATION"
   }
 
   backend {
-    group           = google_compute_region_network_endpoint_group.backend_secondary.id
-    balancing_mode  = "UTILIZATION"
+    group          = google_compute_region_network_endpoint_group.backend_secondary.id
+    balancing_mode = "UTILIZATION"
   }
 
   cdn_policy {
-    cache_mode                = "CACHE_ALL_STATIC"
-    client_ttl                = 3600
-    default_ttl               = 3600
-    max_ttl                   = 86400
-    negative_caching          = true
-    serve_while_stale         = 86400
+    cache_mode        = "CACHE_ALL_STATIC"
+    client_ttl        = 3600
+    default_ttl       = 3600
+    max_ttl           = 86400
+    negative_caching  = true
+    serve_while_stale = 86400
     cache_key_policy {
-      include_host           = true
-      include_protocol       = true
-      include_query_string   = true
+      include_host         = true
+      include_protocol     = true
+      include_query_string = true
     }
   }
 
@@ -136,36 +136,36 @@ resource "google_compute_backend_service" "backend_api" {
 # ============================================
 
 resource "google_compute_backend_service" "frontend_web" {
-  name                      = "${var.project_prefix}-frontend-web-service"
-  project                   = var.gcp_project_id
-  protocol                  = "HTTP"
-  timeout_sec               = 30
-  load_balancing_scheme     = "EXTERNAL"
+  name                  = "${var.project_prefix}-frontend-web-service"
+  project               = var.gcp_project_id
+  protocol              = "HTTP"
+  timeout_sec           = 30
+  load_balancing_scheme = "EXTERNAL"
 
   # Serverless NEGs (Cloud Run) don't support health checks
   # health_checks = [google_compute_health_check.default.id]
 
   backend {
-    group           = google_compute_region_network_endpoint_group.frontend_primary.id
-    balancing_mode  = "UTILIZATION"
+    group          = google_compute_region_network_endpoint_group.frontend_primary.id
+    balancing_mode = "UTILIZATION"
   }
 
   backend {
-    group           = google_compute_region_network_endpoint_group.frontend_secondary.id
-    balancing_mode  = "UTILIZATION"
+    group          = google_compute_region_network_endpoint_group.frontend_secondary.id
+    balancing_mode = "UTILIZATION"
   }
 
   cdn_policy {
-    cache_mode                = "CACHE_ALL_STATIC"
-    client_ttl                = 3600
-    default_ttl               = 3600
-    max_ttl                   = 86400
-    negative_caching          = true
-    serve_while_stale         = 86400
+    cache_mode        = "CACHE_ALL_STATIC"
+    client_ttl        = 3600
+    default_ttl       = 3600
+    max_ttl           = 86400
+    negative_caching  = true
+    serve_while_stale = 86400
     cache_key_policy {
-      include_host           = true
-      include_protocol       = true
-      include_query_string   = true
+      include_host         = true
+      include_protocol     = true
+      include_query_string = true
     }
   }
 
@@ -208,39 +208,39 @@ resource "google_compute_url_map" "default" {
 
 
 # resource "google_compute_url_map" "default" {
-  # name            = "${var.project_prefix}-url-map"
-  # default_service = google_compute_backend_service.frontend_web.id
-  # project         = var.gcp_project_id
+# name            = "${var.project_prefix}-url-map"
+# default_service = google_compute_backend_service.frontend_web.id
+# project         = var.gcp_project_id
 # 
-  # path_matcher {
-    # name            = "backend-api"
-    # default_service = google_compute_backend_service.backend_api.id
+# path_matcher {
+# name            = "backend-api"
+# default_service = google_compute_backend_service.backend_api.id
 # 
-    # path_rule {
-      # paths   = ["/api/*", "/health"]
-      # service = google_compute_backend_service.backend_api.id
-    # }
-  # }
+# path_rule {
+# paths   = ["/api/*", "/health"]
+# service = google_compute_backend_service.backend_api.id
+# }
+# }
 # 
-  # path_matcher {
-    # name            = "frontend-web"
-    # default_service = google_compute_backend_service.frontend_web.id
+# path_matcher {
+# name            = "frontend-web"
+# default_service = google_compute_backend_service.frontend_web.id
 # 
-    # path_rule {
-      # paths   = ["/*"]
-      # service = google_compute_backend_service.frontend_web.id
-    # }
-  # }
+# path_rule {
+# paths   = ["/*"]
+# service = google_compute_backend_service.frontend_web.id
+# }
+# }
 # 
-  # host_rule {
-    # hosts        = ["api.*", "backend.*"]
-    # path_matcher = "backend-api"
-  # }
+# host_rule {
+# hosts        = ["api.*", "backend.*"]
+# path_matcher = "backend-api"
+# }
 # 
-  # host_rule {
-    # hosts        = ["*"]
-    # path_matcher = "frontend-web"
-  # }
+# host_rule {
+# hosts        = ["*"]
+# path_matcher = "frontend-web"
+# }
 # }
 
 # ============================================
@@ -310,9 +310,9 @@ resource "google_compute_url_map" "http_redirect" {
 }
 
 resource "google_compute_target_http_proxy" "http_redirect" {
-  name     = "${var.project_prefix}-http-proxy"
-  url_map  = google_compute_url_map.http_redirect.id
-  project  = var.gcp_project_id
+  name    = "${var.project_prefix}-http-proxy"
+  url_map = google_compute_url_map.http_redirect.id
+  project = var.gcp_project_id
 }
 
 resource "google_compute_global_forwarding_rule" "http_redirect" {
@@ -358,7 +358,7 @@ resource "google_iap_web_backend_service_iam_binding" "backend_api" {
   count               = var.enable_iap && var.google_oauth_client_id != "" ? 1 : 0
   web_backend_service = google_compute_backend_service.backend_api.name
   role                = "roles/iap.httpsResourceAccessor"
-  members             = []  # This will be managed by the IAP module
+  members             = [] # This will be managed by the IAP module
 }
 
 # IAP Settings for Frontend Web Service
@@ -366,5 +366,5 @@ resource "google_iap_web_backend_service_iam_binding" "frontend_web" {
   count               = var.enable_iap && var.google_oauth_client_id != "" ? 1 : 0
   web_backend_service = google_compute_backend_service.frontend_web.name
   role                = "roles/iap.httpsResourceAccessor"
-  members             = []  # This will be managed by the IAP module
+  members             = [] # This will be managed by the IAP module
 }

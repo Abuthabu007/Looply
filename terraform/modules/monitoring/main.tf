@@ -85,7 +85,7 @@ resource "google_monitoring_alert_policy" "cloud_run_cpu_throttle" {
 
 # Alert: Cloud Run memory
 resource "google_monitoring_alert_policy" "cloud_run_memory" {
-  count        = 0  # Disabled - metric not available until service has traffic
+  count        = 0 # Disabled - metric not available until service has traffic
   display_name = "Cloud Run - High Memory Usage"
   combiner     = "OR"
   enabled      = true
@@ -156,7 +156,7 @@ resource "google_monitoring_alert_policy" "cloud_run_latency" {
 
 # Alert: BigQuery slots allocation
 resource "google_monitoring_alert_policy" "bigquery_slots" {
-  count        = 0  # Disabled - metric not available until queries run
+  count        = 0 # Disabled - metric not available until queries run
   display_name = "BigQuery - Slots Overutilization"
   combiner     = "OR"
   enabled      = true
@@ -231,7 +231,7 @@ resource "google_monitoring_alert_policy" "storage_size" {
 
 # Alert: Firestore document reads
 resource "google_monitoring_alert_policy" "firestore_reads" {
-  count        = 0  # Disabled - metric not available until reads occur
+  count        = 0 # Disabled - metric not available until reads occur
   display_name = "Firestore - High Read Operations"
   combiner     = "OR"
   enabled      = true

@@ -10,7 +10,7 @@ resource "google_compute_network" "main_vpc" {
   routing_mode            = "GLOBAL"
   project                 = var.gcp_project_id
 
-  
+
 }
 
 # ============================================

@@ -56,7 +56,7 @@ resource "google_project_iam_member" "iap_policy_admin" {
 resource "google_logging_project_sink" "iap_logs" {
   name        = "${var.project_prefix}-iap-logs"
   destination = "storage.googleapis.com/${var.logs_bucket_name}"
-  
+
   filter = <<-EOT
     resource.type="http_load_balancer"
     AND jsonPayload.enforcedSecurityPolicy.name=~"${var.project_prefix}.*"

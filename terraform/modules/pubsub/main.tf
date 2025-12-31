@@ -14,9 +14,9 @@ resource "google_pubsub_topic" "events" {
 
 # Subscription for Primary Region Cloud Run
 resource "google_pubsub_subscription" "events_subscription_primary" {
-  name             = "${var.project_prefix}-events-sub-primary"
-  topic            = google_pubsub_topic.events.name
-  project          = var.gcp_project_id
+  name                 = "${var.project_prefix}-events-sub-primary"
+  topic                = google_pubsub_topic.events.name
+  project              = var.gcp_project_id
   ack_deadline_seconds = 60
 
   push_config {
@@ -32,9 +32,9 @@ resource "google_pubsub_subscription" "events_subscription_primary" {
 
 # Subscription for Secondary Region Cloud Run
 resource "google_pubsub_subscription" "events_subscription_secondary" {
-  name             = "${var.project_prefix}-events-sub-secondary"
-  topic            = google_pubsub_topic.events.name
-  project          = var.gcp_project_id
+  name                 = "${var.project_prefix}-events-sub-secondary"
+  topic                = google_pubsub_topic.events.name
+  project              = var.gcp_project_id
   ack_deadline_seconds = 60
 
   push_config {
@@ -64,9 +64,9 @@ resource "google_pubsub_topic" "video_processing" {
 }
 
 resource "google_pubsub_subscription" "video_processing_subscription" {
-  name             = "${var.project_prefix}-video-processing-sub"
-  topic            = google_pubsub_topic.video_processing.name
-  project          = var.gcp_project_id
+  name                 = "${var.project_prefix}-video-processing-sub"
+  topic                = google_pubsub_topic.video_processing.name
+  project              = var.gcp_project_id
   ack_deadline_seconds = 300
 
   dead_letter_policy {
@@ -98,9 +98,9 @@ resource "google_pubsub_topic" "user_events" {
 }
 
 resource "google_pubsub_subscription" "user_events_subscription" {
-  name             = "${var.project_prefix}-user-events-sub"
-  topic            = google_pubsub_topic.user_events.name
-  project          = var.gcp_project_id
+  name                 = "${var.project_prefix}-user-events-sub"
+  topic                = google_pubsub_topic.user_events.name
+  project              = var.gcp_project_id
   ack_deadline_seconds = 60
 
   labels = var.tags
@@ -119,9 +119,9 @@ resource "google_pubsub_topic" "stream_quality" {
 }
 
 resource "google_pubsub_subscription" "stream_quality_subscription" {
-  name             = "${var.project_prefix}-stream-quality-sub"
-  topic            = google_pubsub_topic.stream_quality.name
-  project          = var.gcp_project_id
+  name                 = "${var.project_prefix}-stream-quality-sub"
+  topic                = google_pubsub_topic.stream_quality.name
+  project              = var.gcp_project_id
   ack_deadline_seconds = 60
 
   labels = var.tags

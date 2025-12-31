@@ -3,23 +3,23 @@
 # List of required APIs for Looply infrastructure
 locals {
   required_apis = [
-    "artifactregistry.googleapis.com",      # Artifact Registry (Docker images)
-    "compute.googleapis.com",               # Compute Engine (VPC, Load Balancer, etc.)
-    "run.googleapis.com",                   # Cloud Run (Serverless containers)
-    "firestore.googleapis.com",             # Cloud Firestore (NoSQL database)
-    "bigquery.googleapis.com",              # BigQuery (Data warehouse)
-    "pubsub.googleapis.com",                # Cloud Pub/Sub (Messaging)
-    "storage-api.googleapis.com",           # Cloud Storage API
-    "monitoring.googleapis.com",            # Cloud Monitoring (Alerts, dashboards)
-    "logging.googleapis.com",               # Cloud Logging (Log management)
-    "secretmanager.googleapis.com",         # Secret Manager (Secret storage)
-    "cloudkms.googleapis.com",              # Cloud KMS (Key management)
-    "iap.googleapis.com",                   # Identity-Aware Proxy (Authentication)
-    "identitytoolkit.googleapis.com",       # Identity Platform (OAuth providers, sign-in UI)
-    "cloudscheduler.googleapis.com",        # Cloud Scheduler (Scheduled jobs)
-    "iam.googleapis.com",                   # IAM (Identity and Access Management)
-    "serviceusage.googleapis.com",          # Service Usage API (Enable/disable APIs)
-    "servicenetworking.googleapis.com",     # Service Networking API (VPC peering)
+    "artifactregistry.googleapis.com",  # Artifact Registry (Docker images)
+    "compute.googleapis.com",           # Compute Engine (VPC, Load Balancer, etc.)
+    "run.googleapis.com",               # Cloud Run (Serverless containers)
+    "firestore.googleapis.com",         # Cloud Firestore (NoSQL database)
+    "bigquery.googleapis.com",          # BigQuery (Data warehouse)
+    "pubsub.googleapis.com",            # Cloud Pub/Sub (Messaging)
+    "storage-api.googleapis.com",       # Cloud Storage API
+    "monitoring.googleapis.com",        # Cloud Monitoring (Alerts, dashboards)
+    "logging.googleapis.com",           # Cloud Logging (Log management)
+    "secretmanager.googleapis.com",     # Secret Manager (Secret storage)
+    "cloudkms.googleapis.com",          # Cloud KMS (Key management)
+    "iap.googleapis.com",               # Identity-Aware Proxy (Authentication)
+    "identitytoolkit.googleapis.com",   # Identity Platform (OAuth providers, sign-in UI)
+    "cloudscheduler.googleapis.com",    # Cloud Scheduler (Scheduled jobs)
+    "iam.googleapis.com",               # IAM (Identity and Access Management)
+    "serviceusage.googleapis.com",      # Service Usage API (Enable/disable APIs)
+    "servicenetworking.googleapis.com", # Service Networking API (VPC peering)
   ]
 }
 

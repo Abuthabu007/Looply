@@ -42,12 +42,12 @@ output "frontend_secondary_name" {
 
 output "backend_api_endpoints" {
   value = {
-    primary_url  = google_cloud_run_service.backend_primary.status[0].url
+    primary_url   = google_cloud_run_service.backend_primary.status[0].url
     secondary_url = google_cloud_run_service.backend_secondary.status[0].url
-    health_check = "${google_cloud_run_service.backend_primary.status[0].url}/api/health"
-    stream_api   = "${google_cloud_run_service.backend_primary.status[0].url}/api/stream/process"
-    video_api    = "${google_cloud_run_service.backend_primary.status[0].url}/api/video/analyze"
-    users_api    = "${google_cloud_run_service.backend_primary.status[0].url}/api/users"
+    health_check  = "${google_cloud_run_service.backend_primary.status[0].url}/api/health"
+    stream_api    = "${google_cloud_run_service.backend_primary.status[0].url}/api/stream/process"
+    video_api     = "${google_cloud_run_service.backend_primary.status[0].url}/api/video/analyze"
+    users_api     = "${google_cloud_run_service.backend_primary.status[0].url}/api/users"
   }
   description = "Backend API endpoints for all functions"
 }
