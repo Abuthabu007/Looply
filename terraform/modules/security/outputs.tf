@@ -1,12 +1,12 @@
-# output "cloud_armor_policy_id" {
-#   description = "Cloud Armor security policy ID"
-#   value       = google_compute_security_policy.cloud_armor.id
-# }
+output "cloud_armor_policy_id" {
+  description = "Cloud Armor security policy ID"
+  value       = google_compute_security_policy.cloud_armor.id
+}
 
-# output "cloud_armor_policy_name" {
-#   description = "Cloud Armor security policy name"
-#   value       = google_compute_security_policy.cloud_armor.name
-# }
+output "cloud_armor_policy_name" {
+  description = "Cloud Armor security policy name"
+  value       = google_compute_security_policy.cloud_armor.name
+}
 
 output "kms_keyring_id" {
   description = "KMS Key Ring ID"

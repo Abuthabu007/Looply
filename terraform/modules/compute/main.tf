@@ -111,7 +111,7 @@ resource "google_cloud_run_service" "frontend_primary" {
       timeout_seconds      = var.cloud_run_timeout
 
       containers {
-        image = "us-central1-docker.pkg.dev/${var.gcp_project_id}/${var.artifact_registry_repo}/frontend:latest"
+        image = "us-central1-docker.pkg.dev/${var.gcp_project_id}/${var.artifact_registry_repo}/looplysingle:latest"
 
         env {
           name  = "REACT_APP_API_URL"
