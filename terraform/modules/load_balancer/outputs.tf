@@ -2,12 +2,7 @@
 
 output "global_ip_address" {
   value       = google_compute_global_address.lb_ip.address
-  description = "Global load balancer IP address (reserved for future HTTPS use)"
-}
-
-output "http_redirect_ip_address" {
-  value       = google_compute_global_address.http_redirect_ip.address
-  description = "HTTP redirect load balancer IP address (port 80, redirects to HTTPS)"
+  description = "Global load balancer IP address for HTTPS"
 }
 
 output "load_balancer_url" {
@@ -15,24 +10,14 @@ output "load_balancer_url" {
   description = "Load balancer HTTPS URL"
 }
 
-output "backend_api_service_id" {
-  value       = google_compute_backend_service.backend_api.id
-  description = "Backend API service ID"
+output "app_service_id" {
+  value       = google_compute_backend_service.app_service.id
+  description = "Bundled app service ID"
 }
 
-output "backend_api_service_name" {
-  value       = google_compute_backend_service.backend_api.name
-  description = "Backend API service name (for IAP)"
-}
-
-output "frontend_web_service_id" {
-  value       = google_compute_backend_service.frontend_web.id
-  description = "Frontend web service ID"
-}
-
-output "frontend_web_service_name" {
-  value       = google_compute_backend_service.frontend_web.name
-  description = "Frontend web service name (for IAP)"
+output "app_service_name" {
+  value       = google_compute_backend_service.app_service.name
+  description = "Bundled app service name (for IAP)"
 }
 
 output "url_map_id" {
@@ -40,32 +25,17 @@ output "url_map_id" {
   description = "URL map ID"
 }
 
-# output "https_proxy_id" {
-#   value       = google_compute_target_https_proxy.default.id
-#   description = "HTTPS proxy ID (temporarily disabled)"
-# }
-
-# output "ssl_certificate_id" {
-#   value       = google_compute_ssl_certificate.default.id
-#   description = "SSL certificate ID (temporarily disabled)"
-# }
-
-output "backend_primary_neg_id" {
-  value       = google_compute_region_network_endpoint_group.backend_primary.id
-  description = "Primary region backend serverless NEG ID"
+output "https_proxy_id" {
+  value       = google_compute_target_https_proxy.default.id
+  description = "HTTPS proxy ID"
 }
 
-output "backend_secondary_neg_id" {
-  value       = google_compute_region_network_endpoint_group.backend_secondary.id
-  description = "Secondary region backend serverless NEG ID"
+output "ssl_certificate_id" {
+  value       = google_compute_ssl_certificate.default.id
+  description = "SSL certificate ID"
 }
 
-output "frontend_primary_neg_id" {
-  value       = google_compute_region_network_endpoint_group.frontend_primary.id
-  description = "Primary region frontend serverless NEG ID"
-}
-
-output "frontend_secondary_neg_id" {
-  value       = google_compute_region_network_endpoint_group.frontend_secondary.id
-  description = "Secondary region frontend serverless NEG ID"
+output "app_neg_id" {
+  value       = google_compute_region_network_endpoint_group.app_primary.id
+  description = "Bundled app serverless NEG ID"
 }

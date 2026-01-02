@@ -231,3 +231,32 @@ resource "google_project_iam_member" "iap_kms_user" {
   role    = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
   member  = "serviceAccount:${google_service_account.iap_sa.email}"
 }
+
+# ============================================
+# Load Balancer Service Account
+# ============================================
+
+resource "google_service_account" "load_balancer_sa" {
+  account_id   = "${var.project_prefix}-loadbalancer-sa"
+  display_name = "Load Balancer Service Account"
+  description  = "Service account for load balancer operations and IAP secret access"
+  project      = var.gcp_project_id
+}
+
+resource "google_project_iam_member" "load_balancer_log_writer" {
+  project = var.gcp_project_id
+  role    = "roles/logging.logWriter"
+  member  = "serviceAccount:${google_service_account.load_balancer_sa.email}"
+}
+
+resource "google_project_iam_member" "load_balancer_metric_writer" {
+  project = var.gcp_project_id
+  role    = "roles/monitoring.metricWriter"
+  member  = "serviceAccount:${google_service_account.load_balancer_sa.email}"
+}
+
+resource "google_project_iam_member" "load_balancer_secret_accessor" {
+  project = var.gcp_project_id
+  role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_service_account.load_balancer_sa.email}"
+}

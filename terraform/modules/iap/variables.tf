@@ -24,19 +24,9 @@ variable "application_title" {
   default     = "Looply - Video Streaming Platform"
 }
 
-variable "admin_backend_service_name" {
+variable "app_backend_service_name" {
   type        = string
-  description = "Name of the backend API service to protect with IAP"
-}
-
-variable "api_backend_service_name" {
-  type        = string
-  description = "Name of the API backend service for IAP protection"
-}
-
-variable "frontend_backend_service_name" {
-  type        = string
-  description = "Name of the frontend web service to protect with IAP"
+  description = "Name of the bundled app backend service to protect with IAP"
 }
 
 variable "admin_authorized_users" {
@@ -94,6 +84,11 @@ variable "service_account_email" {
 variable "iap_service_account_email" {
   type        = string
   description = "Service account email for IAP KMS encryption"
+}
+
+variable "load_balancer_service_account_email" {
+  type        = string
+  description = "Service account email for load balancer to access OAuth secret"
 }
 
 variable "kms_crypto_key_id" {

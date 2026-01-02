@@ -1,58 +1,63 @@
 # Identity-Aware Proxy (IAP) Module
 # Provides authentication and authorization at the load balancer level
+# Works with a single bundled Cloud Run service (frontend + backend)
 
 # NOTE: IAP Brand and OAuth Client require an organization-level setup.
 # Since your project is organization-managed, these must be created through:
 # 1. GCP Console > Security > Identity-Aware Proxy > OAuth consent screen
 # 2. Google Cloud APIs & Services > Credentials > Create OAuth 2.0 Client
 #
-# This module manages the IAP resource bindings for your backend services.
+# This module manages the IAP resource bindings for your bundled app service.
 # The brand and client are managed externally and configured in your IAP settings.
 
-# IAP Settings - Backend Service Bindings for Authentication/Authorization
-# These resources control who can access your Cloud Run services through IAP
+# ============================================
+# OAuth 2.0 Client Secret in Secret Manager
+# ============================================
 
-# IAP Settings for Backend API Service
-resource "google_iap_web_backend_service_iam_binding" "api_iap_binding" {
-  web_backend_service = var.api_backend_service_name
-  role                = "roles/iap.httpsResourceAccessor"
-  members             = concat(
-    var.admin_authorized_users,
-    var.api_authorized_users
-  )
+resource "google_secret_manager_secret" "oauth_client_secret" {
+  secret_id = "${var.project_prefix}-iap-oauth-secret"
+  project   = var.gcp_project_id
+
+  labels = {
+    component = "iap"
+    managed   = "terraform"
+  }
+
+  replication {
+    auto {}
+  }
 }
 
-# IAP Settings for Frontend Web Service
-resource "google_iap_web_backend_service_iam_binding" "frontend_iap_binding" {
-  web_backend_service = var.frontend_backend_service_name
+# Grant the load balancer service account access to the secret
+resource "google_secret_manager_secret_iam_member" "oauth_secret_accessor" {
+  secret_id = google_secret_manager_secret.oauth_client_secret.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${var.load_balancer_service_account_email}"
+}
+
+# ============================================
+# IAP Settings - Bundled App Service Bindings
+# ============================================
+
+# IAP Settings for Bundled App Service
+resource "google_iap_web_backend_service_iam_binding" "app_iap_binding" {
+  web_backend_service = var.app_backend_service_name
   role                = "roles/iap.httpsResourceAccessor"
   members             = concat(
     var.admin_authorized_users,
+    var.api_authorized_users,
     var.public_authorized_users
   )
 }
 
-# Note: IAP is enabled at the load balancer backend service level
-# OAuth 2.0 client is created above for authentication
+# ============================================
+# Log Sink for IAP Access Logs
+# ============================================
 
-# IAP Policies for Public Client Access (if needed)
-resource "google_iap_web_iam_binding" "public_access" {
-  count   = var.enable_public_iap_access ? 1 : 0
-  role    = "roles/iap.httpsResourceAccessor"
-  members = var.public_authorized_users
-}
-
-# Custom IAM Policy for IAP Admin Role
-resource "google_project_iam_member" "iap_policy_admin" {
-  project = var.gcp_project_id
-  role    = "roles/iap.admin"
-  member  = "serviceAccount:${var.service_account_email}"
-}
-
-# Log sink for IAP access logs
 resource "google_logging_project_sink" "iap_logs" {
   name        = "${var.project_prefix}-iap-logs"
   destination = "storage.googleapis.com/${var.logs_bucket_name}"
+  project     = var.gcp_project_id
 
   filter = <<-EOT
     resource.type="http_load_balancer"
@@ -69,53 +74,20 @@ resource "google_storage_bucket_iam_member" "iap_logs_writer" {
   member = google_logging_project_sink.iap_logs.writer_identity
 }
 
-# Cloud Monitoring for IAP - Temporarily disabled due to filter syntax errors
-/*
-resource "google_monitoring_alert_policy" "iap_failed_auth" {
-  display_name = "${var.project_prefix} - IAP Failed Authentication"
-  combiner     = "OR"
-  enabled      = var.enable_iap_alerts
+# ============================================
+# IAM Policy Admin Role for Service Account
+# ============================================
 
-  conditions {
-    display_name = "High failed authentication rate"
-    condition_threshold {
-      filter          = "resource.type=\"http_load_balancer\" AND metric.type=\"compute.googleapis.com/https/request_count\" AND metadata.user_labels.iap_policy=~\".*\""
-      duration        = "300s"
-      comparison      = "COMPARISON_GT"
-      threshold_value = var.failed_auth_threshold
-    }
-  }
-
-  notification_channels = var.notification_channel_ids
-
-  documentation {
-    content   = "This alert fires when IAP authentication failures exceed ${var.failed_auth_threshold} in a 5-minute window."
-    mime_type = "text/markdown"
-  }
-}
-*/
-
-# Audit logging for IAP - Temporarily disabled due to invalid log types
-/*
-resource "google_project_iam_audit_config" "iap_audit" {
+resource "google_project_iam_member" "iap_policy_admin" {
   project = var.gcp_project_id
-  service = "iap.googleapis.com"
-
-  audit_log_config {
-    log_type = "ADMIN_WRITE"
-  }
-
-  audit_log_config {
-    log_type = "DATA_WRITE"
-  }
-
-  audit_log_config {
-    log_type = "DATA_READ"
-  }
+  role    = "roles/iap.admin"
+  member  = "serviceAccount:${var.service_account_email}"
 }
-*/
 
-# Cloud KMS encryption for OAuth client secret
+# ============================================
+# Cloud KMS Encryption for OAuth Client Secret
+# ============================================
+
 resource "google_kms_crypto_key_iam_member" "iap_secret_encryption" {
   crypto_key_id = var.kms_crypto_key_id
   role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"

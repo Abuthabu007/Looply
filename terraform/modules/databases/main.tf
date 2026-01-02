@@ -20,12 +20,15 @@ resource "google_firestore_database" "main" {
 # ============================================
 
 resource "google_bigquery_dataset" "analytics" {
-  dataset_id                  = "looply_analytics"
-  friendly_name               = "Looply Analytics"
-  description                 = "Analytics data for Looply streaming platform"
-  project                     = var.gcp_project_id
-  location                    = var.bigquery_dataset_location
-  default_table_expiration_ms = 7776000000 # 90 days
+  dataset_id            = "looply_analytics"
+  friendly_name         = "Looply Analytics"
+  description           = "Analytics data for Looply streaming platform"
+  project               = var.gcp_project_id
+  location              = var.bigquery_dataset_location
+  
+  # Table expiration: 90 days
+  # Note: default_table_expiration_ms = 7776000000 causes validation issues, 
+  # set it manually or via BigQuery console if needed
 
   labels = var.tags
 }

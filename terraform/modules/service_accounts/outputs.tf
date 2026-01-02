@@ -38,3 +38,8 @@ output "iap_service_account_email" {
   value       = google_service_account.iap_sa.email
   description = "IAP (Identity-Aware Proxy) service account email"
 }
+
+output "load_balancer_service_account_email" {
+  value       = google_service_account.load_balancer_sa.email
+  description = "Load Balancer service account email"
+}

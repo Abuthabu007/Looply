@@ -89,8 +89,8 @@ module "pubsub" {
   gcp_project_id                    = var.gcp_project_id
   project_prefix                    = var.project_prefix
   pubsub_message_retention_duration = var.pubsub_message_retention_duration
-  cloud_run_primary_service_url     = module.compute.backend_primary_url
-  cloud_run_secondary_service_url   = module.compute.backend_secondary_url
+  cloud_run_primary_service_url     = module.compute.app_url
+  cloud_run_secondary_service_url   = module.compute.app_url
   cloud_run_service_account_email   = module.service_accounts.cloud_run_service_account_email
   pubsub_service_account_email      = module.service_accounts.pubsub_service_account_email
 
@@ -137,14 +137,14 @@ module "databases" {
 module "load_balancer" {
   source = "./modules/load_balancer"
 
-  gcp_project_id         = var.gcp_project_id
-  project_prefix         = var.project_prefix
-  ssl_certificate        = var.ssl_certificate
-  ssl_private_key        = var.ssl_private_key
-  storage_bucket_name    = module.storage.videos_bucket_name
-  vpc_network_name       = module.networking.vpc_network_name
+  gcp_project_id      = var.gcp_project_id
+  project_prefix      = var.project_prefix
+  ssl_certificate     = var.ssl_certificate
+  ssl_private_key     = var.ssl_private_key
+  storage_bucket_name = module.storage.videos_bucket_name
+  vpc_network_name    = module.networking.vpc_network_name
   google_oauth_client_id = var.google_oauth_client_id
-  enable_iap             = true
+  enable_iap          = true
 
   tags = local.common_labels
 
@@ -198,24 +198,23 @@ module "monitoring" {
 module "iap" {
   source = "./modules/iap"
 
-  gcp_project_id                 = var.gcp_project_id
-  project_prefix                 = var.project_prefix
-  support_email                  = var.iap_support_email
-  application_title              = var.iap_application_title
-  admin_backend_service_name     = module.load_balancer.backend_api_service_name
-  api_backend_service_name       = module.load_balancer.backend_api_service_name
-  frontend_backend_service_name  = module.load_balancer.frontend_web_service_name
-  admin_authorized_users         = var.iap_admin_authorized_users
-  api_authorized_users           = var.iap_user_mgmt_authorized_users
-  public_authorized_users        = var.iap_public_authorized_users
-  enable_public_iap_access       = var.iap_enable_public_access
-  enable_iap_alerts              = var.iap_enable_alerts
-  failed_auth_threshold          = var.iap_failed_auth_threshold
-  logs_bucket_name               = module.storage.logs_bucket_name
-  notification_channel_ids       = [module.monitoring.email_notification_channel_id]
-  service_account_email          = module.service_accounts.iap_service_account_email
-  iap_service_account_email      = module.service_accounts.iap_service_account_email
-  kms_crypto_key_id              = module.security.kms_main_key_id
+  gcp_project_id                       = var.gcp_project_id
+  project_prefix                       = var.project_prefix
+  support_email                        = var.iap_support_email
+  application_title                    = var.iap_application_title
+  app_backend_service_name             = module.load_balancer.app_service_name
+  admin_authorized_users               = var.iap_admin_authorized_users
+  api_authorized_users                 = var.iap_user_mgmt_authorized_users
+  public_authorized_users              = var.iap_public_authorized_users
+  enable_public_iap_access             = var.iap_enable_public_access
+  enable_iap_alerts                    = var.iap_enable_alerts
+  failed_auth_threshold                = var.iap_failed_auth_threshold
+  logs_bucket_name                     = module.storage.logs_bucket_name
+  notification_channel_ids             = [module.monitoring.email_notification_channel_id]
+  service_account_email                = module.service_accounts.iap_service_account_email
+  iap_service_account_email            = module.service_accounts.iap_service_account_email
+  load_balancer_service_account_email  = module.service_accounts.load_balancer_service_account_email
+  kms_crypto_key_id                    = module.security.kms_main_key_id
 
   tags = local.common_labels
 
@@ -261,7 +260,7 @@ resource "google_cloud_scheduler_job" "analytics_aggregation" {
 
   http_target {
     http_method = "POST"
-    uri         = module.compute.backend_primary_url
+    uri         = module.compute.app_url
 
     headers = {
       "Content-Type" = "application/json"
@@ -273,7 +272,7 @@ resource "google_cloud_scheduler_job" "analytics_aggregation" {
 
     oidc_token {
       service_account_email = module.service_accounts.cloud_scheduler_service_account_email
-      audience              = module.compute.backend_primary_url
+      audience              = module.compute.app_url
     }
   }
 
