@@ -20,9 +20,19 @@ output "backend_api_service_id" {
   description = "Backend API service ID"
 }
 
+output "backend_api_service_name" {
+  value       = google_compute_backend_service.backend_api.name
+  description = "Backend API service name (for IAP)"
+}
+
 output "frontend_web_service_id" {
   value       = google_compute_backend_service.frontend_web.id
   description = "Frontend web service ID"
+}
+
+output "frontend_web_service_name" {
+  value       = google_compute_backend_service.frontend_web.name
+  description = "Frontend web service name (for IAP)"
 }
 
 output "url_map_id" {

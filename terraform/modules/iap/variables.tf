@@ -26,34 +26,28 @@ variable "application_title" {
 
 variable "admin_backend_service_name" {
   type        = string
-  description = "Name of the admin backend service to protect with IAP"
+  description = "Name of the backend API service to protect with IAP"
 }
 
-variable "user_management_backend_service_name" {
+variable "api_backend_service_name" {
   type        = string
-  description = "Name of the user management backend service to protect with IAP"
+  description = "Name of the API backend service for IAP protection"
 }
 
-variable "analytics_backend_service_name" {
+variable "frontend_backend_service_name" {
   type        = string
-  description = "Name of the analytics backend service to protect with IAP"
+  description = "Name of the frontend web service to protect with IAP"
 }
 
 variable "admin_authorized_users" {
   type        = list(string)
-  description = "List of admin users authorized to access admin panel (e.g., user:admin@company.com, group:admins@company.com)"
+  description = "List of admin users authorized to access the application (e.g., user:admin@company.com, group:admins@company.com)"
   default     = []
 }
 
-variable "user_management_authorized_users" {
+variable "api_authorized_users" {
   type        = list(string)
-  description = "List of users authorized to access user management API"
-  default     = []
-}
-
-variable "analytics_authorized_users" {
-  type        = list(string)
-  description = "List of users authorized to access analytics dashboard"
+  description = "List of users authorized to access the API"
   default     = []
 }
 

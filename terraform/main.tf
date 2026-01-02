@@ -198,29 +198,28 @@ module "monitoring" {
 module "iap" {
   source = "./modules/iap"
 
-  gcp_project_id                       = var.gcp_project_id
-  project_prefix                       = var.project_prefix
-  support_email                        = var.iap_support_email
-  application_title                    = var.iap_application_title
-  admin_backend_service_name           = var.iap_admin_backend_service
-  user_management_backend_service_name = var.iap_user_mgmt_backend_service
-  analytics_backend_service_name       = var.iap_analytics_backend_service
-  admin_authorized_users               = var.iap_admin_authorized_users
-  user_management_authorized_users     = var.iap_user_mgmt_authorized_users
-  analytics_authorized_users           = var.iap_analytics_authorized_users
-  public_authorized_users              = var.iap_public_authorized_users
-  enable_public_iap_access             = var.iap_enable_public_access
-  enable_iap_alerts                    = var.iap_enable_alerts
-  failed_auth_threshold                = var.iap_failed_auth_threshold
-  logs_bucket_name                     = module.storage.logs_bucket_name
-  notification_channel_ids             = [module.monitoring.email_notification_channel_id]
-  service_account_email                = module.service_accounts.iap_service_account_email
-  iap_service_account_email            = module.service_accounts.iap_service_account_email
-  kms_crypto_key_id                    = module.security.kms_main_key_id
+  gcp_project_id                 = var.gcp_project_id
+  project_prefix                 = var.project_prefix
+  support_email                  = var.iap_support_email
+  application_title              = var.iap_application_title
+  admin_backend_service_name     = module.load_balancer.backend_api_service_name
+  api_backend_service_name       = module.load_balancer.backend_api_service_name
+  frontend_backend_service_name  = module.load_balancer.frontend_web_service_name
+  admin_authorized_users         = var.iap_admin_authorized_users
+  api_authorized_users           = var.iap_user_mgmt_authorized_users
+  public_authorized_users        = var.iap_public_authorized_users
+  enable_public_iap_access       = var.iap_enable_public_access
+  enable_iap_alerts              = var.iap_enable_alerts
+  failed_auth_threshold          = var.iap_failed_auth_threshold
+  logs_bucket_name               = module.storage.logs_bucket_name
+  notification_channel_ids       = [module.monitoring.email_notification_channel_id]
+  service_account_email          = module.service_accounts.iap_service_account_email
+  iap_service_account_email      = module.service_accounts.iap_service_account_email
+  kms_crypto_key_id              = module.security.kms_main_key_id
 
   tags = local.common_labels
 
-  depends_on = [module.storage, module.monitoring, module.service_accounts, module.security]
+  depends_on = [module.load_balancer, module.storage, module.monitoring, module.service_accounts, module.security]
 }
 
 # Artifact Registry

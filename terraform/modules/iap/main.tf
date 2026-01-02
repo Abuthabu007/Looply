@@ -9,31 +9,28 @@
 # This module manages the IAP resource bindings for your backend services.
 # The brand and client are managed externally and configured in your IAP settings.
 
-# IAP Settings - Temporarily disabled due to missing backend services
-# These reference services that don't exist yet
-/*
+# IAP Settings - Backend Service Bindings for Authentication/Authorization
+# These resources control who can access your Cloud Run services through IAP
 
-# IAP Settings for Backend Service (Admin Panel)
-resource "google_iap_web_backend_service_iam_binding" "admin_iap_binding" {
-  web_backend_service = var.admin_backend_service_name
+# IAP Settings for Backend API Service
+resource "google_iap_web_backend_service_iam_binding" "api_iap_binding" {
+  web_backend_service = var.api_backend_service_name
   role                = "roles/iap.httpsResourceAccessor"
-  members             = var.admin_authorized_users
+  members             = concat(
+    var.admin_authorized_users,
+    var.api_authorized_users
+  )
 }
 
-# IAP Settings for Backend Service (User Management API)
-resource "google_iap_web_backend_service_iam_binding" "user_mgmt_iap_binding" {
-  web_backend_service = var.user_management_backend_service_name
+# IAP Settings for Frontend Web Service
+resource "google_iap_web_backend_service_iam_binding" "frontend_iap_binding" {
+  web_backend_service = var.frontend_backend_service_name
   role                = "roles/iap.httpsResourceAccessor"
-  members             = var.user_management_authorized_users
+  members             = concat(
+    var.admin_authorized_users,
+    var.public_authorized_users
+  )
 }
-
-# IAP Settings for Backend Service (Analytics Dashboard)
-resource "google_iap_web_backend_service_iam_binding" "analytics_iap_binding" {
-  web_backend_service = var.analytics_backend_service_name
-  role                = "roles/iap.httpsResourceAccessor"
-  members             = var.analytics_authorized_users
-}
-*/
 
 # Note: IAP is enabled at the load balancer backend service level
 # OAuth 2.0 client is created above for authentication
