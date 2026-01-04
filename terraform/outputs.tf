@@ -37,8 +37,8 @@ output "compute" {
 output "pubsub" {
   value = {
     events_topic_name             = module.pubsub.events_topic_name
-    video_processing_topic        = module.pubsub.video_processing_topic_name
-    user_events_topic             = module.pubsub.user_events_topic_name
+    video_upload_events_topic     = module.pubsub.video_upload_events_topic
+    transcoding_complete_topic    = module.pubsub.transcoding_complete_topic
     events_subscription_primary   = module.pubsub.events_subscription_primary_name
     events_subscription_secondary = module.pubsub.events_subscription_secondary_name
   }

@@ -68,35 +68,45 @@ module "networking" {
 module "compute" {
   source = "./modules/compute"
 
-  gcp_project_id            = var.gcp_project_id
-  project_prefix            = var.project_prefix
-  primary_region            = var.primary_region
-  secondary_region          = var.secondary_region
-  artifact_registry_repo    = var.artifact_registry_repo
-  cloud_run_service_account = module.service_accounts.cloud_run_service_account_email
-  cloud_run_cpu             = var.cloud_run_cpu
-  cloud_run_memory          = var.cloud_run_memory
-  cloud_run_timeout         = var.cloud_run_timeout
-  cloud_run_max_instances   = var.cloud_run_max_instances
+  gcp_project_id                  = var.gcp_project_id
+  project_prefix                  = var.project_prefix
+  primary_region                  = var.primary_region
+  secondary_region                = var.secondary_region
+  artifact_registry_repo          = var.artifact_registry_repo
+  cloud_run_service_account       = module.service_accounts.cloud_run_service_account_email
+  cloud_run_cpu                   = var.cloud_run_cpu
+  cloud_run_memory                = var.cloud_run_memory
+  cloud_run_timeout               = var.cloud_run_timeout
+  cloud_run_max_instances         = var.cloud_run_max_instances
+  enable_secondary_region         = var.enable_secondary_region
+  firestore_database_id           = var.firestore_database_id
+  videos_bucket_name              = module.storage.videos_bucket_name
+  transcoded_bucket_name          = module.storage.transcoded_videos_bucket_name
+  transcoder_hls_template         = module.transcoder.hls_template_name
+  video_upload_topic              = module.pubsub.video_upload_events_topic
+  transcoding_complete_topic      = module.pubsub.transcoding_complete_topic
 
-  depends_on = [module.service_accounts, module.apis]
+  tags = local.common_labels
+
+  depends_on = [module.service_accounts, module.apis, module.storage, module.transcoder, module.pubsub]
 }
 
 # Pub/Sub Module
 module "pubsub" {
   source = "./modules/pubsub"
 
-  gcp_project_id                    = var.gcp_project_id
-  project_prefix                    = var.project_prefix
-  pubsub_message_retention_duration = var.pubsub_message_retention_duration
-  cloud_run_primary_service_url     = module.compute.app_url
-  cloud_run_secondary_service_url   = module.compute.app_url
-  cloud_run_service_account_email   = module.service_accounts.cloud_run_service_account_email
-  pubsub_service_account_email      = module.service_accounts.pubsub_service_account_email
+  gcp_project_id                      = var.gcp_project_id
+  project_prefix                      = var.project_prefix
+  pubsub_message_retention_duration   = var.pubsub_message_retention_duration
+  cloud_run_primary_service_url       = "https://${var.primary_region}-docker.pkg.dev/${var.gcp_project_id}/looply-app"
+  cloud_run_secondary_service_url     = "https://${var.secondary_region}-docker.pkg.dev/${var.gcp_project_id}/looply-app"
+  cloud_run_service_account_email     = module.service_accounts.cloud_run_service_account_email
+  pubsub_service_account_email        = module.service_accounts.pubsub_service_account_email
+  enable_secondary_region             = var.enable_secondary_region
 
   tags = local.common_labels
 
-  depends_on = [module.compute, module.service_accounts]
+  depends_on = [module.service_accounts, module.apis]
 }
 
 # Storage Module
@@ -133,22 +143,64 @@ module "databases" {
   depends_on = [module.service_accounts, module.apis]
 }
 
+# ============================================
+# Transcoder Module - Video Transcoding
+# ============================================
+module "transcoder" {
+  source = "./modules/transcoder"
+
+  gcp_project_id       = var.gcp_project_id
+  project_prefix       = var.project_prefix
+  primary_region       = var.primary_region
+  input_bucket         = module.storage.videos_bucket_name
+  output_bucket        = module.storage.transcoded_videos_bucket_name
+
+  tags = local.common_labels
+
+  depends_on = [module.storage, module.apis]
+}
+
+# ============================================
+# Eventarc Module - Event Triggering
+# ============================================
+module "eventarc" {
+  source = "./modules/eventarc"
+
+  gcp_project_id                   = var.gcp_project_id
+  project_prefix                   = var.project_prefix
+  primary_region                   = var.primary_region
+  secondary_region                 = var.secondary_region
+  enable_secondary_region          = var.enable_secondary_region
+  videos_bucket_name               = module.storage.videos_bucket_name
+  cloud_run_service_name           = "${var.project_prefix}-app"
+  cloud_run_service_name_secondary = "${var.project_prefix}-app"
+  eventarc_service_account_email   = module.service_accounts.eventarc_service_account_email
+
+  tags = local.common_labels
+
+  depends_on = [module.storage, module.service_accounts, module.apis]
+}
+
 # Load Balancer Module
 module "load_balancer" {
   source = "./modules/load_balancer"
 
-  gcp_project_id      = var.gcp_project_id
-  project_prefix      = var.project_prefix
-  ssl_certificate     = var.ssl_certificate
-  ssl_private_key     = var.ssl_private_key
-  storage_bucket_name = module.storage.videos_bucket_name
-  vpc_network_name    = module.networking.vpc_network_name
-  google_oauth_client_id = var.google_oauth_client_id
-  enable_iap          = true
+  gcp_project_id               = var.gcp_project_id
+  project_prefix               = var.project_prefix
+  ssl_certificate              = var.ssl_certificate
+  ssl_private_key              = var.ssl_private_key
+  storage_bucket_name          = module.storage.videos_bucket_name
+  vpc_network_name             = module.networking.vpc_network_name
+  primary_region               = var.primary_region
+  secondary_region             = var.secondary_region
+  enable_secondary_region      = var.enable_secondary_region
+  google_oauth_client_id       = var.google_oauth_client_id
+  google_oauth_client_secret   = var.google_oauth_client_secret
+  enable_iap                   = true
 
   tags = local.common_labels
 
-  depends_on = [module.storage, module.compute, module.networking, module.security, module.apis]
+  depends_on = [module.storage, module.networking, module.security, module.apis]
 }
 
 # Security Module (Cloud Armor, KMS, Secret Manager)

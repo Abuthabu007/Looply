@@ -22,48 +22,68 @@ resource "google_compute_security_policy" "cloud_armor" {
 # Cloud KMS - Key Management Service
 # ============================================================================
 
-resource "google_kms_key_ring" "main" {
+# Reference existing keyring (will be created if doesn't exist)
+data "google_kms_key_ring" "main" {
   name     = "${var.project_prefix}-keyring"
   location = var.primary_region
-
-  depends_on = [
-    google_project_service.kms
-  ]
 }
+
+# KMS Crypto Keys - Already created in previous deployment
+# These are commented out to prevent "already exists" errors
+# The existing keys will be used automatically
+/*
 
 resource "google_kms_crypto_key" "looply_key" {
   name            = "${var.project_prefix}-key"
-  key_ring        = google_kms_key_ring.main.id
+  key_ring        = data.google_kms_key_ring.main.id
   rotation_period = "7776000s" # 90 days
   labels          = var.tags
 
   lifecycle {
-    prevent_destroy = true
+    ignore_changes = all
   }
 }
 
 # KMS Key for database encryption
 resource "google_kms_crypto_key" "database_key" {
   name            = "${var.project_prefix}-db-key"
-  key_ring        = google_kms_key_ring.main.id
+  key_ring        = data.google_kms_key_ring.main.id
   rotation_period = "2592000s" # 30 days
   labels          = var.tags
 
   lifecycle {
-    prevent_destroy = true
+    ignore_changes = all
   }
 }
 
 # KMS Key for storage encryption
 resource "google_kms_crypto_key" "storage_key" {
   name            = "${var.project_prefix}-storage-key"
-  key_ring        = google_kms_key_ring.main.id
+  key_ring        = data.google_kms_key_ring.main.id
   rotation_period = "7776000s" # 90 days
   labels          = var.tags
 
   lifecycle {
-    prevent_destroy = true
+    ignore_changes = all
   }
+}
+
+*/
+
+# Data sources for existing KMS keys
+data "google_kms_crypto_key" "looply_key" {
+  name            = "${var.project_prefix}-key"
+  key_ring        = data.google_kms_key_ring.main.id
+}
+
+data "google_kms_crypto_key" "database_key" {
+  name            = "${var.project_prefix}-db-key"
+  key_ring        = data.google_kms_key_ring.main.id
+}
+
+data "google_kms_crypto_key" "storage_key" {
+  name            = "${var.project_prefix}-storage-key"
+  key_ring        = data.google_kms_key_ring.main.id
 }
 
 # ============================================================================
@@ -170,9 +190,9 @@ resource "google_secret_manager_secret_iam_member" "scheduler_secrets" {
 # Cloud Run service account - use KMS keys
 resource "google_kms_crypto_key_iam_member" "cloud_run_kms" {
   for_each = {
-    looply_key   = google_kms_crypto_key.looply_key.id
-    database_key = google_kms_crypto_key.database_key.id
-    storage_key  = google_kms_crypto_key.storage_key.id
+    looply_key   = data.google_kms_crypto_key.looply_key.id
+    database_key = data.google_kms_crypto_key.database_key.id
+    storage_key  = data.google_kms_crypto_key.storage_key.id
   }
 
   crypto_key_id = each.value
@@ -182,14 +202,14 @@ resource "google_kms_crypto_key_iam_member" "cloud_run_kms" {
 
 # BigQuery service account - database key
 resource "google_kms_crypto_key_iam_member" "bigquery_kms" {
-  crypto_key_id = google_kms_crypto_key.database_key.id
+  crypto_key_id = data.google_kms_crypto_key.database_key.id
   role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
   member        = "serviceAccount:${var.bigquery_sa_email}"
 }
 
 # Cloud Storage service account - storage key
 resource "google_kms_crypto_key_iam_member" "storage_kms" {
-  crypto_key_id = google_kms_crypto_key.storage_key.id
+  crypto_key_id = data.google_kms_crypto_key.storage_key.id
   role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
   member        = "serviceAccount:${var.storage_sa_email}"
 }

@@ -11,15 +11,21 @@ variable "project_prefix" {
 }
 
 variable "ssl_certificate" {
-  description = "SSL certificate content"
+  description = "SSL certificate content (PEM format)"
   type        = string
   sensitive   = true
 }
 
 variable "ssl_private_key" {
-  description = "SSL private key content"
+  description = "SSL private key content (PEM format)"
   type        = string
   sensitive   = true
+}
+
+variable "certificate_domains" {
+  description = "List of domains for Google-managed SSL certificate (deprecated)"
+  type        = list(string)
+  default     = []
 }
 
 variable "storage_bucket_name" {
@@ -46,6 +52,30 @@ variable "google_oauth_client_id" {
 
 variable "enable_iap" {
   description = "Enable Identity-Aware Proxy on backend services"
+  type        = bool
+  default     = true
+}
+variable "google_oauth_client_secret" {
+  description = "Google OAuth 2.0 Client Secret for IAP"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
+variable "primary_region" {
+  description = "Primary GCP region for resources"
+  type        = string
+  default     = "us-central1"
+}
+
+variable "secondary_region" {
+  description = "Secondary GCP region for multi-region deployment"
+  type        = string
+  default     = "europe-west1"
+}
+
+variable "enable_secondary_region" {
+  description = "Enable secondary region for multi-region deployment"
   type        = bool
   default     = true
 }

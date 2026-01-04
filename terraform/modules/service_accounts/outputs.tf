@@ -43,3 +43,13 @@ output "load_balancer_service_account_email" {
   value       = google_service_account.load_balancer_sa.email
   description = "Load Balancer service account email"
 }
+
+output "eventarc_service_account_email" {
+  value       = google_service_account.eventarc_sa.email
+  description = "Eventarc service account email"
+}
+
+output "transcoder_service_account_email" {
+  value       = google_service_account.transcoder_sa.email
+  description = "Cloud Transcoder service account email"
+}

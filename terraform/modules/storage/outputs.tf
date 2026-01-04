@@ -39,3 +39,13 @@ output "backup_bucket_url" {
   value       = "gs://${google_storage_bucket.backup.name}"
   description = "Backup bucket URL"
 }
+
+output "transcoded_videos_bucket_name" {
+  value       = google_storage_bucket.transcoded_videos.name
+  description = "Transcoded videos bucket name"
+}
+
+output "transcoded_videos_bucket_url" {
+  value       = "gs://${google_storage_bucket.transcoded_videos.name}"
+  description = "Transcoded videos bucket URL"
+}

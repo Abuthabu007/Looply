@@ -29,6 +29,12 @@ variable "secondary_region" {
   default     = "europe-west1"
 }
 
+variable "enable_secondary_region" {
+  description = "Enable secondary region for multi-region deployment"
+  type        = bool
+  default     = true
+}
+
 variable "primary_subnet_cidr" {
   description = "CIDR block for primary region subnet"
   type        = string
@@ -63,6 +69,12 @@ variable "firestore_region" {
   description = "Firestore database region"
   type        = string
   default     = "us-central1"
+}
+
+variable "firestore_database_id" {
+  description = "Firestore database ID (typically 'default' for the default database)"
+  type        = string
+  default     = "(default)"
 }
 
 variable "artifact_registry_repo" {

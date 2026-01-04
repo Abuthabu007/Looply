@@ -39,9 +39,10 @@ resource "google_bigquery_dataset" "analytics" {
 
 # Stream Events Table
 resource "google_bigquery_table" "stream_events" {
-  dataset_id = google_bigquery_dataset.analytics.dataset_id
-  table_id   = "stream_events"
-  project    = var.gcp_project_id
+  dataset_id            = google_bigquery_dataset.analytics.dataset_id
+  table_id              = "stream_events"
+  project               = var.gcp_project_id
+  deletion_protection   = false
 
   schema = jsonencode([
     {
@@ -101,9 +102,10 @@ resource "google_bigquery_table" "stream_events" {
 
 # User Analytics Table
 resource "google_bigquery_table" "user_analytics" {
-  dataset_id = google_bigquery_dataset.analytics.dataset_id
-  table_id   = "user_analytics"
-  project    = var.gcp_project_id
+  dataset_id            = google_bigquery_dataset.analytics.dataset_id
+  table_id              = "user_analytics"
+  project               = var.gcp_project_id
+  deletion_protection   = false
 
   schema = jsonencode([
     {
@@ -151,9 +153,10 @@ resource "google_bigquery_table" "user_analytics" {
 
 # Stream Quality Table
 resource "google_bigquery_table" "stream_quality" {
-  dataset_id = google_bigquery_dataset.analytics.dataset_id
-  table_id   = "stream_quality"
-  project    = var.gcp_project_id
+  dataset_id            = google_bigquery_dataset.analytics.dataset_id
+  table_id              = "stream_quality"
+  project               = var.gcp_project_id
+  deletion_protection   = false
 
   schema = jsonencode([
     {

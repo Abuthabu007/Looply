@@ -1,7 +1,31 @@
-# Pub/Sub Module - Topics and Subscriptions
+# Pub/Sub Module - Event messaging for video processing workflow
 
 # ============================================
-# Main Events Topic and Subscriptions
+# Video Upload Events Topic
+# ============================================
+
+resource "google_pubsub_topic" "video_upload_events" {
+  name                       = "${var.project_prefix}-${var.video_upload_topic_name}"
+  project                    = var.gcp_project_id
+  message_retention_duration = var.pubsub_message_retention_duration
+
+  labels = var.tags
+}
+
+# ============================================
+# Transcoding Complete Events Topic
+# ============================================
+
+resource "google_pubsub_topic" "transcoding_complete_events" {
+  name                       = "${var.project_prefix}-${var.transcoding_complete_topic_name}"
+  project                    = var.gcp_project_id
+  message_retention_duration = var.pubsub_message_retention_duration
+
+  labels = var.tags
+}
+
+# ============================================
+# Main Events Topic (legacy, kept for compatibility)
 # ============================================
 
 resource "google_pubsub_topic" "events" {

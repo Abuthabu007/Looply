@@ -20,6 +20,7 @@ locals {
     "iam.googleapis.com",               # IAM (Identity and Access Management)
     "serviceusage.googleapis.com",      # Service Usage API (Enable/disable APIs)
     "servicenetworking.googleapis.com", # Service Networking API (VPC peering)
+    "eventarc.googleapis.com",          # Eventarc (Event-driven architecture)
   ]
 }
 

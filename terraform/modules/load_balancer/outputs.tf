@@ -6,8 +6,8 @@ output "global_ip_address" {
 }
 
 output "load_balancer_url" {
-  value       = "https://${google_compute_global_address.lb_ip.address}"
-  description = "Load balancer HTTPS URL"
+  value       = "http://${google_compute_global_address.lb_ip.address}"
+  description = "Load balancer HTTP URL (HTTPS will be available after SSL certificate is configured)"
 }
 
 output "app_service_id" {
@@ -26,13 +26,13 @@ output "url_map_id" {
 }
 
 output "https_proxy_id" {
-  value       = google_compute_target_https_proxy.default.id
-  description = "HTTPS proxy ID"
+  value       = "disabled - waiting for SSL certificate"
+  description = "HTTPS proxy ID (currently disabled)"
 }
 
 output "ssl_certificate_id" {
-  value       = google_compute_ssl_certificate.default.id
-  description = "SSL certificate ID"
+  value       = "disabled - waiting for valid certificate"
+  description = "SSL certificate ID (currently disabled)"
 }
 
 output "app_neg_id" {

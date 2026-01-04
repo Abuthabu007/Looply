@@ -10,27 +10,27 @@ output "cloud_armor_policy_name" {
 
 output "kms_keyring_id" {
   description = "KMS Key Ring ID"
-  value       = google_kms_key_ring.main.id
+  value       = data.google_kms_key_ring.main.id
 }
 
 output "kms_keyring_name" {
   description = "KMS Key Ring name"
-  value       = google_kms_key_ring.main.name
+  value       = data.google_kms_key_ring.main.name
 }
 
 output "kms_main_key_id" {
   description = "Main KMS Crypto Key ID"
-  value       = google_kms_crypto_key.looply_key.id
+  value       = data.google_kms_crypto_key.looply_key.id
 }
 
 output "kms_database_key_id" {
   description = "Database KMS Crypto Key ID"
-  value       = google_kms_crypto_key.database_key.id
+  value       = data.google_kms_crypto_key.database_key.id
 }
 
 output "kms_storage_key_id" {
   description = "Storage KMS Crypto Key ID"
-  value       = google_kms_crypto_key.storage_key.id
+  value       = data.google_kms_crypto_key.storage_key.id
 }
 
 output "secret_ssl_cert_id" {
@@ -66,8 +66,8 @@ output "secrets_created" {
 output "kms_keys_created" {
   description = "List of all created KMS keys"
   value = {
-    main     = google_kms_crypto_key.looply_key.id
-    database = google_kms_crypto_key.database_key.id
-    storage  = google_kms_crypto_key.storage_key.id
+    main     = data.google_kms_crypto_key.looply_key.id
+    database = data.google_kms_crypto_key.database_key.id
+    storage  = data.google_kms_crypto_key.storage_key.id
   }
 }

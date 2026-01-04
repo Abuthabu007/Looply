@@ -8,7 +8,7 @@ resource "google_storage_bucket" "videos" {
   name          = "${var.project_prefix}-videos-${var.gcp_project_id}"
   project       = var.gcp_project_id
   location      = var.primary_region
-  force_destroy = false
+  force_destroy = true
 
   uniform_bucket_level_access = true
 
@@ -39,14 +39,69 @@ resource "google_storage_bucket" "videos" {
 }
 
 # ============================================
-# Analytics Bucket
+# Transcoded Videos Bucket
 # ============================================
+
+resource "google_storage_bucket" "transcoded_videos" {
+  name          = "${var.project_prefix}-transcoded-${var.gcp_project_id}"
+  project       = var.gcp_project_id
+  location      = var.primary_region
+  force_destroy = true
+
+  uniform_bucket_level_access = true
+
+  versioning {
+    enabled = false
+  }
+
+  # Lifecycle policy: Keep transcoded videos for 90 days, then move to cheaper storage
+  lifecycle_rule {
+    condition {
+      age = 30 # 30 days
+    }
+    action {
+      type          = "SetStorageClass"
+      storage_class = "STANDARD"
+    }
+  }
+
+  lifecycle_rule {
+    condition {
+      age = 90 # 90 days
+    }
+    action {
+      type          = "SetStorageClass"
+      storage_class = "NEARLINE"
+    }
+  }
+
+  lifecycle_rule {
+    condition {
+      age = 180 # 180 days (6 months)
+    }
+    action {
+      type          = "SetStorageClass"
+      storage_class = "COLDLINE"
+    }
+  }
+
+  lifecycle_rule {
+    condition {
+      age = 365 # 1 year
+    }
+    action {
+      type = "Delete"
+    }
+  }
+
+  labels = var.tags
+}
 
 resource "google_storage_bucket" "analytics" {
   name          = "${var.project_prefix}-analytics-${var.gcp_project_id}"
   project       = var.gcp_project_id
   location      = var.primary_region
-  force_destroy = false
+  force_destroy = true
 
   uniform_bucket_level_access = true
 
@@ -74,7 +129,7 @@ resource "google_storage_bucket" "logs" {
   name          = "${var.project_prefix}-logs-${var.gcp_project_id}"
   project       = var.gcp_project_id
   location      = var.primary_region
-  force_destroy = false
+  force_destroy = true
 
   uniform_bucket_level_access = true
 
@@ -102,7 +157,7 @@ resource "google_storage_bucket" "backup" {
   name          = "${var.project_prefix}-backup-${var.gcp_project_id}"
   project       = var.gcp_project_id
   location      = "US" # Multi-region for redundancy
-  force_destroy = false
+  force_destroy = true
 
   uniform_bucket_level_access = true
 
@@ -155,6 +210,13 @@ resource "google_storage_bucket_iam_member" "cloud_run_analytics_admin" {
 resource "google_storage_bucket_iam_member" "cloud_run_logs_viewer" {
   bucket = google_storage_bucket.logs.name
   role   = "roles/storage.objectViewer"
+  member = "serviceAccount:${var.cloud_run_service_account_email}"
+}
+
+# Grant Cloud Run service account access to transcoded videos bucket
+resource "google_storage_bucket_iam_member" "cloud_run_transcoded_videos_admin" {
+  bucket = google_storage_bucket.transcoded_videos.name
+  role   = "roles/storage.admin"
   member = "serviceAccount:${var.cloud_run_service_account_email}"
 }
 

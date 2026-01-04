@@ -260,3 +260,80 @@ resource "google_project_iam_member" "load_balancer_secret_accessor" {
   role    = "roles/secretmanager.secretAccessor"
   member  = "serviceAccount:${google_service_account.load_balancer_sa.email}"
 }
+
+# ============================================
+# Eventarc Service Account
+# ============================================
+
+resource "google_service_account" "eventarc_sa" {
+  account_id   = "${var.project_prefix}-eventarc-sa"
+  display_name = "Eventarc Service Account"
+  description  = "Service account for Eventarc to invoke Cloud Run services"
+  project      = var.gcp_project_id
+}
+
+resource "google_project_iam_member" "eventarc_run_invoker" {
+  project = var.gcp_project_id
+  role    = "roles/run.invoker"
+  member  = "serviceAccount:${google_service_account.eventarc_sa.email}"
+}
+
+resource "google_project_iam_member" "eventarc_pubsub_publisher" {
+  project = var.gcp_project_id
+  role    = "roles/pubsub.publisher"
+  member  = "serviceAccount:${google_service_account.eventarc_sa.email}"
+}
+
+resource "google_project_iam_member" "eventarc_log_writer" {
+  project = var.gcp_project_id
+  role    = "roles/logging.logWriter"
+  member  = "serviceAccount:${google_service_account.eventarc_sa.email}"
+}
+
+resource "google_project_iam_member" "eventarc_metric_writer" {
+  project = var.gcp_project_id
+  role    = "roles/monitoring.metricWriter"
+  member  = "serviceAccount:${google_service_account.eventarc_sa.email}"
+}
+
+# ============================================
+# Cloud Transcoder Service Account
+# ============================================
+
+resource "google_service_account" "transcoder_sa" {
+  account_id   = "${var.project_prefix}-transcoder-sa"
+  display_name = "Cloud Transcoder Service Account"
+  description  = "Service account for Cloud Video Transcoder operations"
+  project      = var.gcp_project_id
+}
+
+resource "google_project_iam_member" "transcoder_editor" {
+  project = var.gcp_project_id
+  role    = "roles/transcoder.admin"
+  member  = "serviceAccount:${google_service_account.transcoder_sa.email}"
+}
+
+resource "google_project_iam_member" "transcoder_storage_admin" {
+  project = var.gcp_project_id
+  role    = "roles/storage.admin"
+  member  = "serviceAccount:${google_service_account.transcoder_sa.email}"
+}
+
+resource "google_project_iam_member" "transcoder_log_writer" {
+  project = var.gcp_project_id
+  role    = "roles/logging.logWriter"
+  member  = "serviceAccount:${google_service_account.transcoder_sa.email}"
+}
+
+resource "google_project_iam_member" "transcoder_metric_writer" {
+  project = var.gcp_project_id
+  role    = "roles/monitoring.metricWriter"
+  member  = "serviceAccount:${google_service_account.transcoder_sa.email}"
+}
+
+# Also add transcoder permissions to Cloud Run SA so it can invoke transcoder jobs
+resource "google_project_iam_member" "cloud_run_transcoder_admin" {
+  project = var.gcp_project_id
+  role    = "roles/transcoder.admin"
+  member  = "serviceAccount:${google_service_account.cloud_run_sa.email}"
+}

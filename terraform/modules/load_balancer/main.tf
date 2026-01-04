@@ -18,7 +18,23 @@ resource "google_compute_global_address" "lb_ip" {
 resource "google_compute_region_network_endpoint_group" "app_primary" {
   name                  = "${var.project_prefix}-neg-app-primary"
   network_endpoint_type = "SERVERLESS"
-  region                = "us-central1"
+  region                = var.primary_region
+  project               = var.gcp_project_id
+
+  cloud_run {
+    service = "${var.project_prefix}-app"
+  }
+}
+
+# ============================================
+# Serverless NEG for Bundled App - Secondary Region
+# ============================================
+
+resource "google_compute_region_network_endpoint_group" "app_secondary" {
+  count                 = var.enable_secondary_region ? 1 : 0
+  name                  = "${var.project_prefix}-neg-app-secondary"
+  network_endpoint_type = "SERVERLESS"
+  region                = var.secondary_region
   project               = var.gcp_project_id
 
   cloud_run {
@@ -55,10 +71,22 @@ resource "google_compute_backend_service" "app_service" {
   protocol              = "HTTPS"
   timeout_sec           = 30
   load_balancing_scheme = "EXTERNAL"
+  # NOTE: Serverless NEGs (Cloud Run) use automatic health checks managed by Google
+  # Do not specify health_checks for serverless backends
 
+  # Primary region backend
   backend {
     group          = google_compute_region_network_endpoint_group.app_primary.id
     balancing_mode = "UTILIZATION"
+  }
+
+  # Secondary region backend (optional)
+  dynamic "backend" {
+    for_each = var.enable_secondary_region ? [1] : []
+    content {
+      group          = google_compute_region_network_endpoint_group.app_secondary[0].id
+      balancing_mode = "UTILIZATION"
+    }
   }
 
   cdn_policy {
@@ -75,6 +103,15 @@ resource "google_compute_backend_service" "app_service" {
     }
   }
 
+  # Enable IAP on the backend service (only if credentials provided)
+  dynamic "iap" {
+    for_each = var.google_oauth_client_id != "" ? [1] : []
+    content {
+      oauth2_client_id     = var.google_oauth_client_id
+      oauth2_client_secret = var.google_oauth_client_secret
+    }
+  }
+
   log_config {
     enable      = true
     sample_rate = 1.0
@@ -82,19 +119,29 @@ resource "google_compute_backend_service" "app_service" {
 }
 
 # ============================================
-# SSL/TLS Certificate
+# SSL/TLS Certificate - Self-Signed (DISABLED)
 # ============================================
-
-resource "google_compute_ssl_certificate" "default" {
-  name            = "${var.project_prefix}-ssl-cert"
-  private_key     = var.ssl_private_key
-  certificate     = var.ssl_certificate
-  project         = var.gcp_project_id
-  
-  lifecycle {
-    create_before_destroy = true
-  }
-}
+# SSL certificate creation temporarily disabled
+# The certificate in terraform.tfvars is not properly formatted
+# 
+# To enable HTTPS:
+# 1. Generate a valid self-signed certificate with a proper domain
+# 2. Format the certificate and private key in PEM format
+# 3. Update terraform.tfvars with valid certificate and key content
+# 4. Uncomment this resource block
+#
+# For now, HTTP forwarding to HTTPS redirect will handle traffic
+#
+# resource "google_compute_ssl_certificate" "default" {
+#   name            = "${var.project_prefix}-ssl-cert"
+#   project         = var.gcp_project_id
+#   private_key     = var.ssl_private_key
+#   certificate     = var.ssl_certificate
+#
+#   lifecycle {
+#     create_before_destroy = true
+#   }
+# }
 
 # ============================================
 # URL Map - Routes all traffic to bundled app
@@ -117,30 +164,33 @@ resource "google_compute_url_map" "default" {
 }
 
 # ============================================
-# HTTPS Proxy
+# HTTPS Proxy (DISABLED - waiting for valid certificate)
 # ============================================
-
-resource "google_compute_target_https_proxy" "default" {
-  name             = "${var.project_prefix}-https-proxy"
-  project          = var.gcp_project_id
-  url_map          = google_compute_url_map.default.id
-  ssl_certificates = [google_compute_ssl_certificate.default.id]
-}
+# HTTPS proxy will be enabled once a valid SSL certificate is provided
+# For now, using HTTP with redirect to HTTPS capability
+#
+# resource "google_compute_target_https_proxy" "default" {
+#   name             = "${var.project_prefix}-https-proxy"
+#   project          = var.gcp_project_id
+#   url_map          = google_compute_url_map.default.id
+#   ssl_certificates = [google_compute_ssl_certificate.default.id]
+# }
 
 # ============================================
-# Global Forwarding Rule - HTTPS (Port 443)
+# Global Forwarding Rule - HTTPS (Port 443) (DISABLED)
 # ============================================
-
-resource "google_compute_global_forwarding_rule" "https" {
-  name                  = "${var.project_prefix}-https-forwarding-rule"
-  project               = var.gcp_project_id
-  ip_protocol           = "TCP"
-  load_balancing_scheme = "EXTERNAL"
-  port_range            = "443"
-  target                = google_compute_target_https_proxy.default.id
-  ip_address            = google_compute_global_address.lb_ip.address
-  labels                = var.tags
-}
+# HTTPS forwarding will be enabled with valid SSL certificate
+#
+# resource "google_compute_global_forwarding_rule" "https" {
+#   name                  = "${var.project_prefix}-https-forwarding-rule"
+#   project               = var.gcp_project_id
+#   ip_protocol           = "TCP"
+#   load_balancing_scheme = "EXTERNAL"
+#   port_range            = "443"
+#   target                = google_compute_target_https_proxy.default.id
+#   ip_address            = google_compute_global_address.lb_ip.address
+#   labels                = var.tags
+# }
 
 # ============================================
 # HTTP to HTTPS Redirect

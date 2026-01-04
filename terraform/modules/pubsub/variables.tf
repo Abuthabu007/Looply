@@ -41,3 +41,26 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+variable "video_upload_topic_name" {
+  description = "Name suffix for video upload events topic"
+  type        = string
+  default     = "video-upload-events"
+}
+
+variable "transcoding_complete_topic_name" {
+  description = "Name suffix for transcoding complete events topic"
+  type        = string
+  default     = "transcoding-complete"
+}
+
+variable "ack_deadline_seconds" {
+  description = "Acknowledge deadline in seconds for subscriptions"
+  type        = number
+  default     = 60
+}
+
+variable "enable_secondary_region" {
+  description = "Enable secondary region subscriptions"
+  type        = bool
+  default     = true
+}
