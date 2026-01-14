@@ -4,6 +4,42 @@
 # Videos Bucket
 # ============================================
 
+resource "google_storage_bucket" "opentofu-state" {
+  bucket = "Opentofu-statelock"
+  project       = var.gcp_project_id
+  location      = var.primary_region
+  force_destroy = true
+
+  uniform_bucket_level_access = true
+
+  versioning {
+    enabled = var.video_bucket_versioning
+  }
+
+  lifecycle_rule {
+    condition {
+      num_newer_versions = 5
+    }
+    action {
+      type = "Delete"
+    }
+  }
+
+  lifecycle_rule {
+    condition {
+      age = 365 # 1 year
+    }
+    action {
+      type          = "SetStorageClass"
+      storage_class = "COLDLINE"
+    }
+  }
+
+  labels = var.tags
+}
+}
+
+
 resource "google_storage_bucket" "videos" {
   name          = "${var.project_prefix}-videos-${var.gcp_project_id}"
   project       = var.gcp_project_id
