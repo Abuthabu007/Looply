@@ -1,144 +1,129 @@
-# Networking Module - VPC, Subnets, Routers, NAT, and Firewall Rules
+# Networking Module - Uses terraform-google-modules/network/google
+# Official Google module for VPC, Subnets, Routers, NAT, and Firewall Rules
+
+terraform {
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 5.0"
+    }
+  }
+}
 
 # ============================================
-# VPC Network
+# Main VPC Network using Official Google Module
 # ============================================
 
-resource "google_compute_network" "main_vpc" {
-  name                    = "${var.project_prefix}-vpc"
+module "vpc" {
+  source  = "terraform-google-modules/network/google"
+  version = "~> 7.0"
+
+  project_id      = var.gcp_project_id
+  network_name    = "${var.project_prefix}-vpc"
+  routing_mode    = "GLOBAL"
   auto_create_subnetworks = false
-  routing_mode            = "GLOBAL"
-  project                 = var.gcp_project_id
 
-
-}
-
-# ============================================
-# Primary Region Subnets
-# ============================================
-
-resource "google_compute_subnetwork" "primary_subnet" {
-  name          = "${var.project_prefix}-primary-subnet"
-  ip_cidr_range = var.primary_subnet_cidr
-  region        = var.primary_region
-  network       = google_compute_network.main_vpc.id
-  project       = var.gcp_project_id
-
-  private_ip_google_access = true
-}
-
-resource "google_compute_subnetwork" "primary_proxy_subnet" {
-  name          = "${var.project_prefix}-primary-proxy-subnet"
-  ip_cidr_range = var.primary_secondary_subnet_cidr
-  region        = var.primary_region
-  network       = google_compute_network.main_vpc.id
-  project       = var.gcp_project_id
-  purpose       = "REGIONAL_MANAGED_PROXY"
-  role          = "ACTIVE"
-}
-
-# ============================================
-# Secondary Region Subnets
-# ============================================
-
-resource "google_compute_subnetwork" "secondary_subnet" {
-  name          = "${var.project_prefix}-secondary-subnet"
-  ip_cidr_range = var.secondary_subnet_cidr
-  region        = var.secondary_region
-  network       = google_compute_network.main_vpc.id
-  project       = var.gcp_project_id
-
-  private_ip_google_access = true
-}
-
-resource "google_compute_subnetwork" "secondary_proxy_subnet" {
-  name          = "${var.project_prefix}-secondary-proxy-subnet"
-  ip_cidr_range = var.secondary_secondary_subnet_cidr
-  region        = var.secondary_region
-  network       = google_compute_network.main_vpc.id
-  project       = var.gcp_project_id
-  purpose       = "REGIONAL_MANAGED_PROXY"
-  role          = "ACTIVE"
-}
-
-# ============================================
-# Firewall Rules
-# ============================================
-
-# Allow internal VPC communication
-resource "google_compute_firewall" "allow_internal" {
-  name    = "${var.project_prefix}-allow-internal"
-  network = google_compute_network.main_vpc.name
-  project = var.gcp_project_id
-
-  allow {
-    protocol = "tcp"
-    ports    = ["0-65535"]
-  }
-
-  allow {
-    protocol = "udp"
-    ports    = ["0-65535"]
-  }
-
-  allow {
-    protocol = "icmp"
-  }
-
-  source_ranges = [
-    var.primary_subnet_cidr,
-    var.secondary_subnet_cidr
+  subnets = [
+    {
+      subnet_name           = "${var.project_prefix}-primary-subnet"
+      subnet_ip             = var.primary_subnet_cidr
+      subnet_region         = var.primary_region
+      subnet_private_access = true
+      subnet_flow_logs      = var.enable_flow_logs
+      description           = "Primary region subnet"
+    },
+    {
+      subnet_name           = "${var.project_prefix}-primary-proxy-subnet"
+      subnet_ip             = var.primary_secondary_subnet_cidr
+      subnet_region         = var.primary_region
+      subnet_private_access = true
+      purpose               = "REGIONAL_MANAGED_PROXY"
+      role                  = "ACTIVE"
+      description           = "Primary region proxy subnet"
+    },
+    {
+      subnet_name           = "${var.project_prefix}-secondary-subnet"
+      subnet_ip             = var.secondary_subnet_cidr
+      subnet_region         = var.secondary_region
+      subnet_private_access = true
+      subnet_flow_logs      = var.enable_flow_logs
+      description           = "Secondary region subnet"
+    },
+    {
+      subnet_name           = "${var.project_prefix}-secondary-proxy-subnet"
+      subnet_ip             = var.secondary_secondary_subnet_cidr
+      subnet_region         = var.secondary_region
+      subnet_private_access = true
+      purpose               = "REGIONAL_MANAGED_PROXY"
+      role                  = "ACTIVE"
+      description           = "Secondary region proxy subnet"
+    },
   ]
 
-  target_tags = ["internal"]
-}
-
-# Allow HTTPS traffic from internet
-resource "google_compute_firewall" "allow_https" {
-  name    = "${var.project_prefix}-allow-https"
-  network = google_compute_network.main_vpc.name
-  project = var.gcp_project_id
-
-  allow {
-    protocol = "tcp"
-    ports    = ["443"]
-  }
-
-  source_ranges = ["0.0.0.0/0"]
-  target_tags   = ["https-server"]
-}
-
-# Allow HTTP traffic from internet (for redirects)
-resource "google_compute_firewall" "allow_http" {
-  name    = "${var.project_prefix}-allow-http"
-  network = google_compute_network.main_vpc.name
-  project = var.gcp_project_id
-
-  allow {
-    protocol = "tcp"
-    ports    = ["80"]
-  }
-
-  source_ranges = ["0.0.0.0/0"]
-  target_tags   = ["http-server"]
-}
-
-# Allow GCP health checks
-resource "google_compute_firewall" "allow_health_checks" {
-  name    = "${var.project_prefix}-allow-health-checks"
-  network = google_compute_network.main_vpc.name
-  project = var.gcp_project_id
-
-  allow {
-    protocol = "tcp"
-  }
-
-  source_ranges = [
-    "35.191.0.0/16",
-    "130.211.0.0/22"
+  firewall_rules = [
+    {
+      name  = "${var.project_prefix}-allow-internal"
+      description = "Allow internal VPC communication"
+      direction = "INGRESS"
+      priority  = 1000
+      ranges    = [var.primary_subnet_cidr, var.secondary_subnet_cidr]
+      allow = [
+        {
+          protocol = "tcp"
+          ports    = ["0-65535"]
+        },
+        {
+          protocol = "udp"
+          ports    = ["0-65535"]
+        },
+        {
+          protocol = "icmp"
+        }
+      ]
+      target_tags = ["internal"]
+    },
+    {
+      name        = "${var.project_prefix}-allow-https"
+      description = "Allow HTTPS traffic from internet"
+      direction   = "INGRESS"
+      priority    = 1000
+      ranges      = ["0.0.0.0/0"]
+      allow = [
+        {
+          protocol = "tcp"
+          ports    = ["443"]
+        }
+      ]
+      target_tags = ["https-server"]
+    },
+    {
+      name        = "${var.project_prefix}-allow-http"
+      description = "Allow HTTP traffic from internet for redirects"
+      direction   = "INGRESS"
+      priority    = 1000
+      ranges      = ["0.0.0.0/0"]
+      allow = [
+        {
+          protocol = "tcp"
+          ports    = ["80"]
+        }
+      ]
+      target_tags = ["http-server"]
+    },
+    {
+      name        = "${var.project_prefix}-allow-health-checks"
+      description = "Allow GCP health checks"
+      direction   = "INGRESS"
+      priority    = 1000
+      ranges      = ["35.191.0.0/16", "130.211.0.0/22"]
+      allow = [
+        {
+          protocol = "tcp"
+        }
+      ]
+      target_tags = ["health-check"]
+    }
   ]
-
-  target_tags = ["health-check"]
 }
 
 # ============================================
@@ -148,7 +133,7 @@ resource "google_compute_firewall" "allow_health_checks" {
 resource "google_compute_router" "primary_router" {
   name    = "${var.project_prefix}-primary-router"
   region  = var.primary_region
-  network = google_compute_network.main_vpc.id
+  network = module.vpc.network_id
   project = var.gcp_project_id
 
   bgp {
@@ -177,7 +162,7 @@ resource "google_compute_router_nat" "primary_nat" {
 resource "google_compute_router" "secondary_router" {
   name    = "${var.project_prefix}-secondary-router"
   region  = var.secondary_region
-  network = google_compute_network.main_vpc.id
+  network = module.vpc.network_id
   project = var.gcp_project_id
 
   bgp {
@@ -208,12 +193,12 @@ resource "google_compute_global_address" "private_ip_address" {
   purpose       = "VPC_PEERING"
   address_type  = "INTERNAL"
   prefix_length = 16
-  network       = google_compute_network.main_vpc.id
+  network       = module.vpc.network_id
   project       = var.gcp_project_id
 }
 
 resource "google_service_networking_connection" "private_vpc_connection" {
-  network                 = google_compute_network.main_vpc.id
+  network                 = module.vpc.network_id
   service                 = "servicenetworking.googleapis.com"
   reserved_peering_ranges = [google_compute_global_address.private_ip_address.name]
 }

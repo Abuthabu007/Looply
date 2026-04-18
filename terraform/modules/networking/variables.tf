@@ -40,6 +40,12 @@ variable "secondary_secondary_subnet_cidr" {
   type        = string
 }
 
+variable "enable_flow_logs" {
+  description = "Enable VPC Flow Logs for subnets"
+  type        = bool
+  default     = false
+}
+
 variable "tags" {
   description = "Tags to apply to resources"
   type        = map(string)

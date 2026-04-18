@@ -10,6 +10,12 @@ variable "project_prefix" {
   type        = string
 }
 
+variable "environment" {
+  description = "Environment name (e.g., production, staging, development)"
+  type        = string
+  default     = "production"
+}
+
 variable "primary_region" {
   description = "Primary GCP region"
   type        = string
@@ -51,7 +57,13 @@ variable "cloud_run_timeout" {
 variable "cloud_run_max_instances" {
   description = "Maximum number of instances for Cloud Run services"
   type        = number
-  default     = 2
+  default     = 100
+}
+
+variable "cloud_run_max_concurrency" {
+  description = "Maximum concurrent requests per instance"
+  type        = number
+  default     = 80
 }
 
 variable "enable_secondary_region" {

@@ -2,22 +2,27 @@
 
 output "global_ip_address" {
   value       = google_compute_global_address.lb_ip.address
-  description = "Global load balancer IP address for HTTPS"
+  description = "Global load balancer IP address"
 }
 
-output "load_balancer_url" {
+output "load_balancer_https_url" {
+  value       = "https://${google_compute_global_address.lb_ip.address}"
+  description = "Load balancer HTTPS URL"
+}
+
+output "load_balancer_http_url" {
   value       = "http://${google_compute_global_address.lb_ip.address}"
-  description = "Load balancer HTTP URL (HTTPS will be available after SSL certificate is configured)"
+  description = "Load balancer HTTP URL (redirects to HTTPS)"
 }
 
-output "app_service_id" {
+output "backend_service_id" {
   value       = google_compute_backend_service.app_service.id
-  description = "Bundled app service ID"
+  description = "Backend service ID"
 }
 
-output "app_service_name" {
+output "backend_service_name" {
   value       = google_compute_backend_service.app_service.name
-  description = "Bundled app service name (for IAP)"
+  description = "Backend service name"
 }
 
 output "url_map_id" {
@@ -26,16 +31,26 @@ output "url_map_id" {
 }
 
 output "https_proxy_id" {
-  value       = "disabled - waiting for SSL certificate"
-  description = "HTTPS proxy ID (currently disabled)"
+  value       = google_compute_target_https_proxy.default.id
+  description = "HTTPS target proxy ID"
 }
 
 output "ssl_certificate_id" {
-  value       = "disabled - waiting for valid certificate"
-  description = "SSL certificate ID (currently disabled)"
+  value       = google_compute_managed_ssl_certificate.default.id
+  description = "Managed SSL certificate ID"
 }
 
-output "app_neg_id" {
+output "ssl_certificate_status" {
+  value       = try(google_compute_managed_ssl_certificate.default.managed[0].domain_status, {})
+  description = "SSL certificate domain status"
+}
+
+output "app_primary_neg_id" {
   value       = google_compute_region_network_endpoint_group.app_primary.id
-  description = "Bundled app serverless NEG ID"
+  description = "Primary region serverless NEG ID"
+}
+
+output "app_secondary_neg_id" {
+  value       = var.enable_secondary_region ? google_compute_region_network_endpoint_group.app_secondary[0].id : null
+  description = "Secondary region serverless NEG ID"
 }

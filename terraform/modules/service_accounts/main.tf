@@ -1,53 +1,171 @@
-# Service Accounts Module - Defines all service accounts and their IAM roles
+# Service Accounts Module
+# Manages all service accounts and their IAM role assignments
+# Following Google Cloud best practices with modular design
+
+terraform {
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 5.0"
+    }
+  }
+}
 
 # ============================================
-# Cloud Run Service Account
+# Service Accounts Configuration
 # ============================================
 
-resource "google_service_account" "cloud_run_sa" {
-  account_id   = "${var.project_prefix}-cloudrun-sa"
-  display_name = "Cloud Run Service Account"
-  description  = "Service account for Cloud Run services to access GCP resources"
+locals {
+  service_accounts = {
+    cloud_run = {
+      account_id   = "${var.project_prefix}-cloudrun-sa"
+      display_name = "Cloud Run Service Account"
+      description  = "Service account for Cloud Run services"
+      roles = [
+        "roles/logging.logWriter",
+        "roles/monitoring.metricWriter",
+        "roles/pubsub.publisher",
+        "roles/pubsub.subscriber",
+        "roles/datastore.user",
+        "roles/storage.objectAdmin",
+        "roles/iam.serviceAccountTokenCreator",
+        "roles/artifactregistry.reader"
+      ]
+    }
+    pubsub = {
+      account_id   = "${var.project_prefix}-pubsub-sa"
+      display_name = "Pub/Sub Service Account"
+      description  = "Service account for Pub/Sub message processing"
+      roles = [
+        "roles/pubsub.editor",
+        "roles/logging.logWriter",
+        "roles/monitoring.metricWriter"
+      ]
+    }
+    bigquery = {
+      account_id   = "${var.project_prefix}-bigquery-sa"
+      display_name = "BigQuery Service Account"
+      description  = "Service account for BigQuery operations"
+      roles = [
+        "roles/bigquery.admin",
+        "roles/logging.logWriter",
+        "roles/monitoring.metricWriter"
+      ]
+    }
+    firestore = {
+      account_id   = "${var.project_prefix}-firestore-sa"
+      display_name = "Firestore Service Account"
+      description  = "Service account for Firestore operations"
+      roles = [
+        "roles/datastore.user",
+        "roles/logging.logWriter"
+      ]
+    }
+    storage = {
+      account_id   = "${var.project_prefix}-storage-sa"
+      display_name = "Cloud Storage Service Account"
+      description  = "Service account for Cloud Storage operations"
+      roles = [
+        "roles/storage.objectAdmin",
+        "roles/logging.logWriter"
+      ]
+    }
+    scheduler = {
+      account_id   = "${var.project_prefix}-scheduler-sa"
+      display_name = "Cloud Scheduler Service Account"
+      description  = "Service account for Cloud Scheduler jobs"
+      roles = [
+        "roles/run.invoker",
+        "roles/logging.logWriter"
+      ]
+    }
+    artifact_registry = {
+      account_id   = "${var.project_prefix}-artifact-registry-sa"
+      display_name = "Artifact Registry Service Account"
+      description  = "Service account for Artifact Registry management"
+      roles = [
+        "roles/artifactregistry.admin",
+        "roles/logging.logWriter"
+      ]
+    }
+    iap = {
+      account_id   = "${var.project_prefix}-iap-sa"
+      display_name = "IAP Service Account"
+      description  = "Service account for Identity-Aware Proxy (IAP) operations"
+      roles = [
+        "roles/iap.admin",
+        "roles/iap.httpsResourceAccessor",
+        "roles/logging.logWriter",
+        "roles/monitoring.metricWriter",
+        "roles/cloudkms.cryptoKeyEncrypterDecrypter"
+      ]
+    }
+    load_balancer = {
+      account_id   = "${var.project_prefix}-loadbalancer-sa"
+      display_name = "Load Balancer Service Account"
+      description  = "Service account for load balancer operations and IAP"
+      roles = [
+        "roles/logging.logWriter",
+        "roles/monitoring.metricWriter",
+        "roles/secretmanager.secretAccessor"
+      ]
+    }
+    eventarc = {
+      account_id   = "${var.project_prefix}-eventarc-sa"
+      display_name = "Eventarc Service Account"
+      description  = "Service account for Eventarc to invoke Cloud Run services"
+      roles = [
+        "roles/run.invoker",
+        "roles/pubsub.publisher",
+        "roles/logging.logWriter",
+        "roles/monitoring.metricWriter"
+      ]
+    }
+    transcoder = {
+      account_id   = "${var.project_prefix}-transcoder-sa"
+      display_name = "Cloud Transcoder Service Account"
+      description  = "Service account for Cloud Transcoder operations"
+      roles = [
+        "roles/transcoder.admin",
+        "roles/storage.objectAdmin",
+        "roles/logging.logWriter"
+      ]
+    }
+  }
+}
+
+# ============================================
+# Create Service Accounts
+# ============================================
+
+resource "google_service_account" "service_accounts" {
+  for_each = local.service_accounts
+
+  account_id   = each.value.account_id
+  display_name = each.value.display_name
+  description  = each.value.description
   project      = var.gcp_project_id
 }
 
-resource "google_project_iam_member" "cloud_run_log_writer" {
-  project = var.gcp_project_id
-  role    = "roles/logging.logWriter"
-  member  = "serviceAccount:${google_service_account.cloud_run_sa.email}"
-}
+# ============================================
+# Assign IAM Roles to Service Accounts
+# ============================================
 
-resource "google_project_iam_member" "cloud_run_metric_writer" {
-  project = var.gcp_project_id
-  role    = "roles/monitoring.metricWriter"
-  member  = "serviceAccount:${google_service_account.cloud_run_sa.email}"
-}
+resource "google_project_iam_member" "service_account_roles" {
+  for_each = merge([
+    for sa_name, sa_config in local.service_accounts : {
+      for role in sa_config.roles :
+      "${sa_name}-${role}" => {
+        sa_email = google_service_account.service_accounts[sa_name].email
+        role     = role
+      }
+    }
+  ]...)
 
-resource "google_project_iam_member" "cloud_run_pubsub_publisher" {
   project = var.gcp_project_id
-  role    = "roles/pubsub.publisher"
-  member  = "serviceAccount:${google_service_account.cloud_run_sa.email}"
+  role    = each.value.role
+  member  = "serviceAccount:${each.value.sa_email}"
 }
-
-resource "google_project_iam_member" "cloud_run_pubsub_subscriber" {
-  project = var.gcp_project_id
-  role    = "roles/pubsub.subscriber"
-  member  = "serviceAccount:${google_service_account.cloud_run_sa.email}"
-}
-
-resource "google_project_iam_member" "cloud_run_firestore_user" {
-  project = var.gcp_project_id
-  role    = "roles/datastore.user"
-  member  = "serviceAccount:${google_service_account.cloud_run_sa.email}"
-}
-
-resource "google_project_iam_member" "cloud_run_storage_admin" {
-  project = var.gcp_project_id
-  role    = "roles/storage.admin"
-  member  = "serviceAccount:${google_service_account.cloud_run_sa.email}"
-}
-
-resource "google_project_iam_member" "cloud_run_service_account_user" {
   project = var.gcp_project_id
   role    = "roles/iam.serviceAccountUser"
   member  = "serviceAccount:${google_service_account.cloud_run_sa.email}"

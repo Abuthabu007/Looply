@@ -1,4 +1,14 @@
 # Load Balancer Module - Global Load Balancer with Cloud CDN and IAP
+# Uses terraform-google-modules standards for load balancer architecture
+
+terraform {
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 5.0"
+    }
+  }
+}
 
 # ============================================
 # Global Static IP Address
@@ -12,9 +22,10 @@ resource "google_compute_global_address" "lb_ip" {
 }
 
 # ============================================
-# Serverless NEG for Bundled App - Primary Region
+# Serverless NEGs for Cloud Run Services
 # ============================================
 
+# Primary Region
 resource "google_compute_region_network_endpoint_group" "app_primary" {
   name                  = "${var.project_prefix}-neg-app-primary"
   network_endpoint_type = "SERVERLESS"
@@ -26,10 +37,7 @@ resource "google_compute_region_network_endpoint_group" "app_primary" {
   }
 }
 
-# ============================================
-# Serverless NEG for Bundled App - Secondary Region
-# ============================================
-
+# Secondary Region
 resource "google_compute_region_network_endpoint_group" "app_secondary" {
   count                 = var.enable_secondary_region ? 1 : 0
   name                  = "${var.project_prefix}-neg-app-secondary"
@@ -38,12 +46,12 @@ resource "google_compute_region_network_endpoint_group" "app_secondary" {
   project               = var.gcp_project_id
 
   cloud_run {
-    service = "${var.project_prefix}-app"
+    service = "${var.project_prefix}-app-secondary"
   }
 }
 
 # ============================================
-# Health Check
+# Health Check Configuration
 # ============================================
 
 resource "google_compute_health_check" "default" {
@@ -59,10 +67,12 @@ resource "google_compute_health_check" "default" {
   timeout_sec         = 5
   healthy_threshold   = 2
   unhealthy_threshold = 2
+
+  labels = var.tags
 }
 
 # ============================================
-# Backend Service for Bundled App - with CDN and IAP
+# Backend Service with CDN and IAP
 # ============================================
 
 resource "google_compute_backend_service" "app_service" {
@@ -71,13 +81,15 @@ resource "google_compute_backend_service" "app_service" {
   protocol              = "HTTPS"
   timeout_sec           = 30
   load_balancing_scheme = "EXTERNAL"
-  # NOTE: Serverless NEGs (Cloud Run) use automatic health checks managed by Google
-  # Do not specify health_checks for serverless backends
+  custom_request_headers {
+    headers = ["X-Client-Region:{client_region}"]
+  }
 
   # Primary region backend
   backend {
     group          = google_compute_region_network_endpoint_group.app_primary.id
     balancing_mode = "UTILIZATION"
+    max_utilization = 0.8
   }
 
   # Secondary region backend (optional)
@@ -86,9 +98,11 @@ resource "google_compute_backend_service" "app_service" {
     content {
       group          = google_compute_region_network_endpoint_group.app_secondary[0].id
       balancing_mode = "UTILIZATION"
+      max_utilization = 0.8
     }
   }
 
+  # Cloud CDN Configuration
   cdn_policy {
     cache_mode        = "CACHE_ALL_STATIC"
     client_ttl        = 3600
@@ -96,6 +110,7 @@ resource "google_compute_backend_service" "app_service" {
     max_ttl           = 86400
     negative_caching  = true
     serve_while_stale = 86400
+    
     cache_key_policy {
       include_host         = true
       include_protocol     = true
@@ -103,48 +118,47 @@ resource "google_compute_backend_service" "app_service" {
     }
   }
 
-  # Enable IAP on the backend service (only if credentials provided)
+  # Enable IAP if configured
   dynamic "iap" {
-    for_each = var.google_oauth_client_id != "" ? [1] : []
+    for_each = var.enable_iap && var.google_oauth_client_id != "" ? [1] : []
     content {
       oauth2_client_id     = var.google_oauth_client_id
       oauth2_client_secret = var.google_oauth_client_secret
     }
   }
 
+  # Logging Configuration
   log_config {
     enable      = true
     sample_rate = 1.0
   }
+
+  labels = var.tags
 }
 
 # ============================================
-# SSL/TLS Certificate - Self-Signed (DISABLED)
+# SSL Certificate Management
 # ============================================
-# SSL certificate creation temporarily disabled
-# The certificate in terraform.tfvars is not properly formatted
-# 
-# To enable HTTPS:
-# 1. Generate a valid self-signed certificate with a proper domain
-# 2. Format the certificate and private key in PEM format
-# 3. Update terraform.tfvars with valid certificate and key content
-# 4. Uncomment this resource block
-#
-# For now, HTTP forwarding to HTTPS redirect will handle traffic
-#
-# resource "google_compute_ssl_certificate" "default" {
-#   name            = "${var.project_prefix}-ssl-cert"
-#   project         = var.gcp_project_id
-#   private_key     = var.ssl_private_key
-#   certificate     = var.ssl_certificate
-#
-#   lifecycle {
-#     create_before_destroy = true
-#   }
-# }
+
+# Google-Managed SSL Certificate (Recommended for production)
+resource "google_compute_managed_ssl_certificate" "default" {
+  name    = "${var.project_prefix}-ssl-cert"
+  project = var.gcp_project_id
+
+  managed {
+    domains = concat(
+      var.certificate_domains,
+      ["looply.co.in"]
+    )
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
 
 # ============================================
-# URL Map - Routes all traffic to bundled app
+# HTTPS Proxy and Forwarding Rules
 # ============================================
 
 resource "google_compute_url_map" "default" {
@@ -153,7 +167,7 @@ resource "google_compute_url_map" "default" {
   default_service = google_compute_backend_service.app_service.id
 
   host_rule {
-    hosts        = ["looply.co.in", "*.looply.co.in", "*"]
+    hosts        = concat(["looply.co.in", "*.looply.co.in"], var.certificate_domains)
     path_matcher = "main-matcher"
   }
 
@@ -163,34 +177,25 @@ resource "google_compute_url_map" "default" {
   }
 }
 
-# ============================================
-# HTTPS Proxy (DISABLED - waiting for valid certificate)
-# ============================================
-# HTTPS proxy will be enabled once a valid SSL certificate is provided
-# For now, using HTTP with redirect to HTTPS capability
-#
-# resource "google_compute_target_https_proxy" "default" {
-#   name             = "${var.project_prefix}-https-proxy"
-#   project          = var.gcp_project_id
-#   url_map          = google_compute_url_map.default.id
-#   ssl_certificates = [google_compute_ssl_certificate.default.id]
-# }
+resource "google_compute_target_https_proxy" "default" {
+  name             = "${var.project_prefix}-https-proxy"
+  project          = var.gcp_project_id
+  url_map          = google_compute_url_map.default.id
+  ssl_certificates = [google_compute_managed_ssl_certificate.default.id]
 
-# ============================================
-# Global Forwarding Rule - HTTPS (Port 443) (DISABLED)
-# ============================================
-# HTTPS forwarding will be enabled with valid SSL certificate
-#
-# resource "google_compute_global_forwarding_rule" "https" {
-#   name                  = "${var.project_prefix}-https-forwarding-rule"
-#   project               = var.gcp_project_id
-#   ip_protocol           = "TCP"
-#   load_balancing_scheme = "EXTERNAL"
-#   port_range            = "443"
-#   target                = google_compute_target_https_proxy.default.id
-#   ip_address            = google_compute_global_address.lb_ip.address
-#   labels                = var.tags
-# }
+  labels = var.tags
+}
+
+resource "google_compute_global_forwarding_rule" "https" {
+  name                  = "${var.project_prefix}-https-forwarding-rule"
+  project               = var.gcp_project_id
+  ip_protocol           = "TCP"
+  load_balancing_scheme = "EXTERNAL"
+  port_range            = "443"
+  target                = google_compute_target_https_proxy.default.id
+  ip_address            = google_compute_global_address.lb_ip.address
+  labels                = var.tags
+}
 
 # ============================================
 # HTTP to HTTPS Redirect
@@ -222,28 +227,4 @@ resource "google_compute_global_forwarding_rule" "http" {
   target                = google_compute_target_http_proxy.http_redirect_proxy.id
   ip_address            = google_compute_global_address.lb_ip.address
   labels                = var.tags
-}
-
-# ============================================
-# Firewall Rule for Load Balancer Health Checks
-# ============================================
-
-resource "google_compute_firewall" "allow_lb_health_check" {
-  name    = "${var.project_prefix}-allow-lb-health-check"
-  network = var.vpc_network_name
-  project = var.gcp_project_id
-
-  allow {
-    protocol = "tcp"
-    ports    = ["443", "80"]
-  }
-
-  source_ranges = [
-    "35.191.0.0/16",
-    "130.211.0.0/22",
-    "209.85.152.0/22",
-    "209.85.204.0/22"
-  ]
-
-  target_tags = ["load-balancer"]
 }

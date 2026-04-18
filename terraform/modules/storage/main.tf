@@ -1,50 +1,59 @@
 # Storage Module - Cloud Storage Buckets
+# Manages all storage buckets for Looply platform with proper lifecycle management
 
-# ============================================
-# Videos Bucket
-# ============================================
-
-resource "google_storage_bucket" "opentofu-state" {
-  bucket = "Opentofu-statelock"
-  project       = var.gcp_project_id
-  location      = var.primary_region
-  force_destroy = true
-
-  uniform_bucket_level_access = true
-
-  versioning {
-    enabled = var.video_bucket_versioning
-  }
-
-  lifecycle_rule {
-    condition {
-      num_newer_versions = 5
-    }
-    action {
-      type = "Delete"
+terraform {
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 5.0"
     }
   }
+}
 
-  lifecycle_rule {
-    condition {
-      age = 365 # 1 year
+# ============================================
+# Local Variables for Lifecycle Management
+# ============================================
+
+locals {
+  bucket_base_name = "${var.project_prefix}-${var.gcp_project_id}"
+  
+  standard_labels = merge(
+    var.tags,
+    {
+      managed-by = "terraform"
     }
-    action {
-      type          = "SetStorageClass"
+  )
+  
+  # Lifecycle rules that expire data
+  expire_rule = [
+    {
+      action        = "Delete"
+      age_days      = 365
+      num_versions  = null
+    }
+  ]
+  
+  # Versioning kept lifecycle rule
+  archive_rule = [
+    {
+      action        = "SetStorageClass"
+      age_days      = 365
       storage_class = "COLDLINE"
+      num_versions  = null
     }
-  }
-
-  labels = var.tags
-}
+  ]
 }
 
+# ============================================
+# Videos Bucket (Raw uploads)
+# ============================================
 
 resource "google_storage_bucket" "videos" {
-  name          = "${var.project_prefix}-videos-${var.gcp_project_id}"
+  name          = "${local.bucket_base_name}-videos"
   project       = var.gcp_project_id
   location      = var.primary_region
-  force_destroy = true
+  force_destroy = false
+  storage_class = "STANDARD"
 
   uniform_bucket_level_access = true
 
@@ -52,6 +61,7 @@ resource "google_storage_bucket" "videos" {
     enabled = var.video_bucket_versioning
   }
 
+  # Delete old versions
   lifecycle_rule {
     condition {
       num_newer_versions = 5
@@ -61,17 +71,21 @@ resource "google_storage_bucket" "videos" {
     }
   }
 
-  lifecycle_rule {
-    condition {
-      age = 365 # 1 year
-    }
-    action {
-      type          = "SetStorageClass"
-      storage_class = "COLDLINE"
+  # Archive to cheaper storage after 1 year
+  dynamic "lifecycle_rule" {
+    for_each = local.archive_rule
+    content {
+      condition {
+        age = lifecycle_rule.value.age_days
+      }
+      action {
+        type          = lifecycle_rule.value.action
+        storage_class = lookup(lifecycle_rule.value, "storage_class", null)
+      }
     }
   }
 
-  labels = var.tags
+  labels = local.standard_labels
 }
 
 # ============================================
@@ -79,10 +93,11 @@ resource "google_storage_bucket" "videos" {
 # ============================================
 
 resource "google_storage_bucket" "transcoded_videos" {
-  name          = "${var.project_prefix}-transcoded-${var.gcp_project_id}"
+  name          = "${local.bucket_base_name}-transcoded"
   project       = var.gcp_project_id
   location      = var.primary_region
-  force_destroy = true
+  force_destroy = false
+  storage_class = "STANDARD"
 
   uniform_bucket_level_access = true
 
@@ -90,10 +105,10 @@ resource "google_storage_bucket" "transcoded_videos" {
     enabled = false
   }
 
-  # Lifecycle policy: Keep transcoded videos for 90 days, then move to cheaper storage
+  # Move to cheaper storage over time
   lifecycle_rule {
     condition {
-      age = 30 # 30 days
+      age = 30
     }
     action {
       type          = "SetStorageClass"
@@ -103,7 +118,7 @@ resource "google_storage_bucket" "transcoded_videos" {
 
   lifecycle_rule {
     condition {
-      age = 90 # 90 days
+      age = 90
     }
     action {
       type          = "SetStorageClass"
@@ -113,7 +128,7 @@ resource "google_storage_bucket" "transcoded_videos" {
 
   lifecycle_rule {
     condition {
-      age = 180 # 180 days (6 months)
+      age = 180
     }
     action {
       type          = "SetStorageClass"
@@ -123,21 +138,26 @@ resource "google_storage_bucket" "transcoded_videos" {
 
   lifecycle_rule {
     condition {
-      age = 365 # 1 year
+      age = 365
     }
     action {
       type = "Delete"
     }
   }
 
-  labels = var.tags
+  labels = local.standard_labels
 }
 
+# ============================================
+# Analytics Data Bucket
+# ============================================
+
 resource "google_storage_bucket" "analytics" {
-  name          = "${var.project_prefix}-analytics-${var.gcp_project_id}"
+  name          = "${local.bucket_base_name}-analytics"
   project       = var.gcp_project_id
   location      = var.primary_region
-  force_destroy = true
+  force_destroy = false
+  storage_class = "STANDARD"
 
   uniform_bucket_level_access = true
 
@@ -145,27 +165,29 @@ resource "google_storage_bucket" "analytics" {
     enabled = true
   }
 
+  # Delete after 90 days
   lifecycle_rule {
     condition {
-      age = 90 # 90 days
+      age = 90
     }
     action {
       type = "Delete"
     }
   }
 
-  labels = var.tags
+  labels = local.standard_labels
 }
 
 # ============================================
-# Logs Bucket
+# Access Logs Bucket
 # ============================================
 
 resource "google_storage_bucket" "logs" {
-  name          = "${var.project_prefix}-logs-${var.gcp_project_id}"
+  name          = "${local.bucket_base_name}-logs"
   project       = var.gcp_project_id
   location      = var.primary_region
-  force_destroy = true
+  force_destroy = false
+  storage_class = "STANDARD"
 
   uniform_bucket_level_access = true
 
@@ -173,6 +195,7 @@ resource "google_storage_bucket" "logs" {
     enabled = false
   }
 
+  # Delete logs after retention period
   lifecycle_rule {
     condition {
       age = var.log_bucket_retention_days
@@ -182,18 +205,19 @@ resource "google_storage_bucket" "logs" {
     }
   }
 
-  labels = var.tags
+  labels = local.standard_labels
 }
 
 # ============================================
-# Backup Bucket (Cross-region for DR)
+# Backup Bucket (Multi-region for DR)
 # ============================================
 
 resource "google_storage_bucket" "backup" {
-  name          = "${var.project_prefix}-backup-${var.gcp_project_id}"
+  name          = "${local.bucket_base_name}-backup"
   project       = var.gcp_project_id
-  location      = "US" # Multi-region for redundancy
-  force_destroy = true
+  location      = "US"  # Multi-region for redundancy
+  force_destroy = false
+  storage_class = "STANDARD"
 
   uniform_bucket_level_access = true
 
@@ -201,6 +225,7 @@ resource "google_storage_bucket" "backup" {
     enabled = true
   }
 
+  # Archive strategy for backups
   lifecycle_rule {
     condition {
       age = 30
@@ -221,53 +246,47 @@ resource "google_storage_bucket" "backup" {
     }
   }
 
-  labels = var.tags
+  labels = local.standard_labels
 }
 
 # ============================================
-# Bucket IAM Permissions
+# Bucket IAM Access Control
 # ============================================
 
-# Grant Cloud Run service account access to videos bucket
+# Cloud Run service account access
 resource "google_storage_bucket_iam_member" "cloud_run_videos_admin" {
   bucket = google_storage_bucket.videos.name
-  role   = "roles/storage.admin"
+  role   = "roles/storage.objectAdmin"
   member = "serviceAccount:${var.cloud_run_service_account_email}"
 }
 
-# Grant Cloud Run service account access to analytics bucket
+resource "google_storage_bucket_iam_member" "cloud_run_transcoded_admin" {
+  bucket = google_storage_bucket.transcoded_videos.name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${var.cloud_run_service_account_email}"
+}
+
 resource "google_storage_bucket_iam_member" "cloud_run_analytics_admin" {
   bucket = google_storage_bucket.analytics.name
-  role   = "roles/storage.admin"
+  role   = "roles/storage.objectAdmin"
   member = "serviceAccount:${var.cloud_run_service_account_email}"
 }
 
-# Grant Cloud Run service account access to logs bucket
 resource "google_storage_bucket_iam_member" "cloud_run_logs_viewer" {
   bucket = google_storage_bucket.logs.name
   role   = "roles/storage.objectViewer"
   member = "serviceAccount:${var.cloud_run_service_account_email}"
 }
 
-# Grant Cloud Run service account access to transcoded videos bucket
-resource "google_storage_bucket_iam_member" "cloud_run_transcoded_videos_admin" {
-  bucket = google_storage_bucket.transcoded_videos.name
-  role   = "roles/storage.admin"
-  member = "serviceAccount:${var.cloud_run_service_account_email}"
-}
-
-# Grant storage service account access
+# Storage service account access
 resource "google_storage_bucket_iam_member" "storage_sa_videos_admin" {
   bucket = google_storage_bucket.videos.name
-  role   = "roles/storage.admin"
+  role   = "roles/storage.objectAdmin"
   member = "serviceAccount:${var.storage_service_account_email}"
 }
 
 resource "google_storage_bucket_iam_member" "storage_sa_backup_admin" {
   bucket = google_storage_bucket.backup.name
-  role   = "roles/storage.admin"
+  role   = "roles/storage.objectAdmin"
   member = "serviceAccount:${var.storage_service_account_email}"
 }
-
-# CORS Configuration - inline within the bucket or use google_storage_bucket_cors resource
-# Note: CORS can also be configured via lifecycle rules in the bucket definition
